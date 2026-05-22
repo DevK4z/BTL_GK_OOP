@@ -160,30 +160,36 @@ export default function FloatingChat() {
 
       {/* Cửa sổ Chat */}
       <div 
-        className={`fixed bottom-24 right-6 w-[360px] h-[520px] bg-blue-50/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl flex flex-col z-50 transition-all duration-300 transform origin-bottom-right ${
+        className={`fixed bottom-24 right-6 w-[360px] h-[520px] bg-[#131a2e]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex flex-col z-50 transition-all duration-300 transform origin-bottom-right ${
           isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 pointer-events-none translate-y-8'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[#3744e8] text-white rounded-t-2xl">
-          <div className="flex items-center gap-2">
-            <div className="bg-white/20 p-1.5 rounded-full">
+        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#1a233a] to-[#131a2e] border-b border-white/10 rounded-t-2xl">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-500/20 text-blue-400 p-2 rounded-xl border border-blue-500/20">
                <Bot size={18} />
             </div>
-            <h3 className="font-semibold text-[15px]">LLM</h3>
+            <div>
+              <h3 className="font-semibold text-[15px] text-white">SmartHub AI</h3>
+              <p className="text-[11px] text-green-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                Luôn sẵn sàng
+              </p>
+            </div>
           </div>
-          <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors">
-            <X size={20} />
+          <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 p-1.5 rounded-lg transition-colors">
+            <X size={18} />
           </button>
         </div>
 
         {/* Thông báo nhập API Key (Nếu chưa có) */}
         {!apiKey && chatHistory.length === 0 && (
-          <div className="p-4 m-3 bg-blue-100 border border-blue-200 rounded-xl text-sm text-blue-800">
-            <div className="flex items-center gap-2 mb-2 font-semibold">
+          <div className="p-4 m-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-200 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 font-semibold text-blue-400">
               <KeyRound size={16} /> Nhập Gemini API Key
             </div>
-            <p className="mb-2 text-xs">Vui lòng cung cấp khóa API Gemini của bạn để bắt đầu trò chuyện. Khóa này chỉ lưu trữ cục bộ trên trình duyệt của bạn.</p>
+            <p className="mb-2 text-xs text-blue-200/80 leading-relaxed">Vui lòng cung cấp khóa API Gemini của bạn để bắt đầu trò chuyện. Khóa này chỉ lưu trữ cục bộ trên trình duyệt của bạn.</p>
           </div>
         )}
 
@@ -192,11 +198,11 @@ export default function FloatingChat() {
           {/* Tin nhắn chào mừng mặc định */}
           {chatHistory.length === 0 && apiKey && (
              <div className="flex items-start gap-2 max-w-[85%]">
-               <div className="w-8 h-8 rounded-full bg-[#3744e8] flex items-center justify-center text-white flex-shrink-0 mt-1">
+               <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
                  <Bot size={16} />
                </div>
-               <div className="p-3 bg-white text-gray-800 rounded-2xl rounded-tl-sm shadow-sm text-sm border border-gray-100 leading-relaxed">
-                 Xin chào 👋<br/>Tôi có thể giúp gì cho bạn hôm nay?
+               <div className="p-3 bg-[#1a233a] text-gray-200 rounded-2xl rounded-tl-sm shadow-sm text-sm border border-white/5 leading-relaxed">
+                 Xin chào 👋<br/>Tôi là SmartHub AI. Tôi có thể giúp gì cho bạn hôm nay?
                </div>
              </div>
           )}
@@ -210,7 +216,7 @@ export default function FloatingChat() {
             >
               {/* Avatar */}
               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
-                msg.role === 'user' ? 'bg-blue-100 text-blue-600 hidden' : 'bg-[#3744e8] text-white'
+                msg.role === 'user' ? 'bg-blue-600 text-white hidden' : 'bg-blue-500/20 border border-blue-500/20 text-blue-400'
               }`}>
                 {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
               </div>
@@ -218,8 +224,8 @@ export default function FloatingChat() {
               {/* Message Bubble */}
               <div className={`p-3 text-[14px] shadow-sm leading-relaxed ${
                 msg.role === 'user' 
-                  ? 'bg-[#3744e8] text-white rounded-2xl rounded-tr-sm' 
-                  : 'bg-white text-gray-800 rounded-2xl rounded-tl-sm border border-gray-100'
+                  ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' 
+                  : 'bg-[#1a233a] text-gray-200 rounded-2xl rounded-tl-sm border border-white/5'
               }`}>
                 {msg.content}
               </div>
@@ -228,13 +234,13 @@ export default function FloatingChat() {
           
           {isTyping && (
             <div className="flex items-start gap-2 max-w-[85%]">
-              <div className="w-8 h-8 rounded-full bg-[#3744e8] flex items-center justify-center text-white flex-shrink-0 mt-1">
+              <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
                  <Bot size={16} />
                </div>
-              <div className="p-3.5 bg-white rounded-2xl rounded-tl-sm shadow-sm border border-gray-100 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+              <div className="p-3.5 bg-[#1a233a] rounded-2xl rounded-tl-sm shadow-sm border border-white/5 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
               </div>
             </div>
           )}
@@ -242,25 +248,29 @@ export default function FloatingChat() {
         </div>
 
         {/* Input Area */}
-        <div className="p-3 bg-white border-t border-gray-100 rounded-b-2xl">
+        <div className="p-3 bg-gradient-to-t from-[#131a2e] to-transparent border-t border-white/5 rounded-b-2xl mt-auto">
           <form 
             onSubmit={handleSend}
-            className="flex items-center gap-2 border border-gray-200 rounded-full px-4 py-2 bg-white"
+            className="flex items-center gap-2 border border-white/10 rounded-2xl px-4 py-2.5 bg-[#1a233a] focus-within:border-blue-500/50 transition-colors"
           >
             <input 
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={!apiKey ? "Nhập API Key bắt đầu bằng AIza..." : "Nhập câu hỏi của bạn..."}
-              className="flex-1 bg-transparent border-none outline-none text-[14px] text-gray-700 placeholder:text-gray-400 min-w-0"
+              placeholder={!apiKey ? "Nhập API Key bắt đầu bằng AIza..." : "Hỏi AI về hệ thống..."}
+              className="flex-1 bg-transparent border-none outline-none text-[14px] text-white placeholder:text-gray-500 min-w-0"
               disabled={isTyping}
             />
-            <div className="flex items-center gap-2 text-gray-400">
-               <button type="button" className="hover:text-gray-600 transition-colors">
+            <div className="flex items-center gap-1 text-gray-500">
+               <button type="button" className="p-1.5 hover:bg-white/5 rounded-lg hover:text-blue-400 transition-colors">
                   <Smile size={18} />
                </button>
-               <button type="button" className="hover:text-gray-600 transition-colors">
-                  <Paperclip size={18} />
+               <button 
+                 type="submit" 
+                 disabled={!input.trim() || isTyping}
+                 className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ml-1"
+                >
+                  <Send size={16} />
                </button>
             </div>
           </form>
