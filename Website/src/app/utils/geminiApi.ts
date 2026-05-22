@@ -3,10 +3,6 @@ import { ChatMessage, Room } from '../store';
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
-export async function chatWithGemini(
-  messages: ChatMessage[],
-  apiKey: string,
-  rooms: Room[]
 export interface GeminiFunctionCall {
   name: string;
   args: any;
