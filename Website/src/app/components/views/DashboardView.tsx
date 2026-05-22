@@ -9,6 +9,7 @@ import DeviceControl from '../devices/DeviceControl';
 import ActivityFeed from '../dashboard/ActivityFeed';
 import EnergyChart from '../dashboard/EnergyChart';
 import AIAdvisorPanel from '../dashboard/AIAdvisorPanel';
+import FloatingChat from '../chat/FloatingChat';
 import { useSmartHomeStore } from '../../store';
 import { SmartLight, SmartAC, SmartLock } from '../../models';
 import type { RoomData } from '../../types';
@@ -330,6 +331,9 @@ export default function DashboardView({
       <section className="chart-section" id="chart-section">
         <EnergyChart />
       </section>
+
+      {/* Tích hợp Trợ lý AI Chatbot */}
+      <FloatingChat />
     </>
   );
 }

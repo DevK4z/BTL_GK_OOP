@@ -36,6 +36,13 @@ import {
 } from './models';
 import type { DeviceData, DeviceType, RoomData, ActivityLog, SmartLightDevice, SmartACDevice, SmartLockDevice } from './types';
 
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
 // ── Re-export types để các component import từ store như cũ ─────────
 export type { DeviceData as Device, DeviceType, RoomData as Room, ActivityLog, SmartLightDevice, SmartACDevice, SmartLockDevice };
 
@@ -135,6 +142,8 @@ interface SmartHomeStore {
   activityLogs: ActivityLog[];
   sidebarCollapsed: boolean;
   activeView: string;
+  apiKey: string;
+  chatHistory: ChatMessage[];
 
   toggleDevice: (roomId: string, deviceId: string) => void;
   updateLight: (roomId: string, deviceId: string, brightness: number, color: string) => void;
@@ -144,6 +153,9 @@ interface SmartHomeStore {
   addLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setActiveView: (view: string) => void;
+  setApiKey: (key: string) => void;
+  addChatMessage: (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
+  clearChatHistory: () => void;
 
   // ── CRUD: Phòng & Thiết bị ──
   addRoom: (name: string, icon: string) => string;
@@ -169,6 +181,8 @@ export const useSmartHomeStore = create<SmartHomeStore>()(
       activityLogs: INITIAL_LOGS,
       sidebarCollapsed: false,
       activeView: 'overview',
+      apiKey: '',
+      chatHistory: [],
 
       toggleDevice: (roomId, deviceId) =>
         set((state) => ({
@@ -263,6 +277,15 @@ export const useSmartHomeStore = create<SmartHomeStore>()(
 
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       setActiveView: (view) => set({ activeView: view }),
+      setApiKey: (key) => set({ apiKey: key }),
+      addChatMessage: (msg) => set((state) => ({
+        chatHistory: [...state.chatHistory, {
+          ...msg,
+          id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        }]
+      })),
+      clearChatHistory: () => set({ chatHistory: [] }),
 
       // ── CRUD: Thêm / Xóa Phòng ──
       addRoom: (name, icon) => {
@@ -306,6 +329,8 @@ export const useSmartHomeStore = create<SmartHomeStore>()(
       partialize: (state) => ({
         rooms: state.rooms,
         activityLogs: state.activityLogs,
+        apiKey: state.apiKey,
+        chatHistory: state.chatHistory,
       }),
     },
   ),
