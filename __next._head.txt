@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[17111,["/TEST/_next/static/chunks/0mnv7x-m1celg.js"],"ViewportBoundary"]
+3:I[17111,["/TEST/_next/static/chunks/0mnv7x-m1celg.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+5:I[64567,["/TEST/_next/static/chunks/0mnv7x-m1celg.js"],"IconMark"]
+0:{"rsc":["$","$1","h",{"children":[null,["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Smart Home Hub | BTL Giữa Kỳ OOP"}],["$","meta","1",{"name":"description","content":"Hệ thống quản lý nhà thông minh - Bài tập lớn Giữa kỳ Lập trình hướng đối tượng. Quản lý SmartLight, SmartAC, SmartLock với giao diện dashboard hiện đại."}],["$","link","2",{"rel":"icon","href":"/TEST/favicon.ico?favicon.0x3dzn~oxb6tn.ico","sizes":"256x256","type":"image/x-icon"}],["$","$L5","3",{}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"x4RJnYGufb6YV8xhddLXt"}
