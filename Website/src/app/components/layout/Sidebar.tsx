@@ -31,7 +31,7 @@ export default function Sidebar() {
       className={`sidebar ${sidebarCollapsed ? 'sidebar--collapsed' : ''}`}
       id="main-sidebar"
     >
-      {/* Logo */}
+
       <div className="sidebar__logo">
         <div className="sidebar__logo-icon">
           <Zap size={22} />
@@ -41,7 +41,6 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Online badge */}
       {!sidebarCollapsed && (
         <div className="sidebar__status">
           <span className="sidebar__status-dot" />
@@ -49,7 +48,6 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Nav */}
       <nav className="sidebar__nav">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -68,7 +66,7 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      {/* Collapse toggle */}
+
       <button
         className="sidebar__toggle"
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}

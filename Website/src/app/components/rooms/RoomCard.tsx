@@ -75,7 +75,6 @@ export default function RoomCard({ room, onClick }: RoomCardProps) {
         </div>
       </div>
 
-      {/* Mini device power bars */}
       <div className="room-card__bars">
         {room.devices.map((d) => {
           const pct =

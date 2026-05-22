@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-// Interface chuẩn theo yêu cầu của Giảng viên
 interface AIRecommendation {
   type: "warning" | "suggestion";
   title: string;
@@ -14,15 +13,12 @@ export async function POST(req: Request) {
   try {
     const { devices } = await req.json();
 
-    // Lấy API Key từ môi trường
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      // MOCKUP FALLBACK: Khi không có API Key, trả về dữ liệu mẫu thực tế
-      // Giúp giảng viên chấm thi chạy được ngay lập tức mà không bị lỗi 500
+
       const mockRecommendations: AIRecommendation[] = [];
 
-      // Phân tích trạng thái để tạo mock recommendation thông minh
       const highPowerOn = devices.find((d: any) => d.type === 'SmartAC' && d.status);
       if (highPowerOn) {
         mockRecommendations.push({
@@ -47,7 +43,6 @@ export async function POST(req: Request) {
         });
       }
 
-      // Đề xuất khóa cửa buổi tối
       const unlockedLock = devices.find((d: any) => d.type === 'SmartLock' && d.isLocked === false);
       if (unlockedLock) {
         mockRecommendations.push({
@@ -56,7 +51,7 @@ export async function POST(req: Request) {
           message: `Thiết bị "${unlockedLock.name}" đang ở trạng thái MỞ KHÓA. Hãy khóa cửa để đảm bảo an toàn.`,
           actionable: true,
           targetDeviceId: unlockedLock.id,
-          suggestedAction: "turn_on" // Mở rộng thêm logic khóa
+          suggestedAction: "turn_on" 
         });
       }
 
@@ -74,7 +69,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ recommendations: mockRecommendations });
     }
 
-    // Gửi yêu cầu thực tế tới Google Gemini API
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
@@ -115,8 +109,7 @@ Chú ý: Nếu không có cảnh báo nào đặc biệt, hãy trả về ít nh
 
     const json = await response.json();
     const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    // Parse kết quả trả về từ Gemini
+
     const recommendations = JSON.parse(text);
     return NextResponse.json({ recommendations });
   } catch (error: any) {

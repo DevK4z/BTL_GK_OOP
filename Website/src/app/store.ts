@@ -1,30 +1,8 @@
-/**
- * ====================================================================
- *  SMART HOME HUB — CONTROLLER LAYER (Zustand Store)
- * ====================================================================
- *
- *  Store quản lý trạng thái toàn cục của ứng dụng.
- *
- *  ĐIỂM NỔI BẬT:
- *  ─────────────
- *  • Sử dụng Zustand `persist` middleware để lưu/khôi phục trạng thái
- *    từ localStorage → dữ liệu KHÔNG bị mất khi F5 tải lại trang.
- *
- *  • Dữ liệu ban đầu được tạo bằng từ khóa `new` từ các Class OOP
- *    (SmartLight, SmartAC, SmartLock) rồi serialize thành Plain Object
- *    để Zustand/React có thể theo dõi thay đổi (reactivity).
- *
- *  • Hàm tính công suất `getDevicePower()` sử dụng Factory Method
- *    (`SmartDevice.fromJSON`) + đa hình (`getPowerConsumption()`)
- *    → đảm bảo tính nhất quán giữa Model layer và Store layer.
- *
- * ====================================================================
- */
+
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-// ── Import OOP Classes & Types từ Model Layer ───────────────────────
 import {
   SmartDevice,
   SmartLight,
@@ -43,29 +21,14 @@ export interface ChatMessage {
   timestamp: string;
 }
 
-// ── Re-export types để các component import từ store như cũ ─────────
 export type { DeviceData as Device, DeviceType, RoomData as Room, ActivityLog, SmartLightDevice, SmartACDevice, SmartLockDevice };
 
-// ── Re-export power functions (delegate to OOP model) ───────────────
 export const getDevicePower = oopGetDevicePower;
 export const getRoomPower = oopGetRoomPower;
 export const getTotalSystemPower = oopGetTotalPower;
 
-// ─────────────────────────────────────────────────────────────────────
-//  DỮ LIỆU BAN ĐẦU — Tạo bằng `new` (thể hiện OOP)
-// ─────────────────────────────────────────────────────────────────────
-
-/**
- * Hàm khởi tạo dữ liệu mặc định sử dụng từ khóa `new`.
- *
- * ĐA HÌNH (Polymorphism) được thể hiện ngay tại đây:
- *   Mảng `devices` có kiểu `SmartDevice[]` (base class),
- *   nhưng chứa cả SmartLight, SmartAC, SmartLock (derived classes).
- *   Khi gọi `device.getPowerConsumption()`, mỗi phần tử tự động
- *   thực thi đúng phương thức của lớp con (Late Binding).
- */
 function createInitialRooms(): RoomData[] {
-  // ── Phòng Khách ────────────────────────────────────────────────
+
   const livingRoom: SmartDevice[] = [
     new SmartLight('D1', 'Đèn trần', 60, true, true, 80, 'Warm White'),
     new SmartLight('D2', 'Đèn bàn', 25, true, true, 60, 'Cool White'),
@@ -73,27 +36,22 @@ function createInitialRooms(): RoomData[] {
     new SmartLock('D4', 'Khóa cửa chính', 5, true, true, true, '1234'),
   ];
 
-  // ── Nhà Bếp ────────────────────────────────────────────────────
   const kitchen: SmartDevice[] = [
     new SmartLight('D5', 'Đèn bếp', 40, true, true, 100, 'Daylight'),
     new SmartAC('D6', 'Điều hòa bếp', 800, false, true, 25),
   ];
 
-  // ── Phòng Ngủ ──────────────────────────────────────────────────
   const bedroom: SmartDevice[] = [
     new SmartLight('D7', 'Đèn ngủ', 15, false, true, 30, 'Sunset'),
     new SmartAC('D8', 'Điều hòa phòng ngủ', 900, true, true, 24),
     new SmartLock('D9', 'Khóa phòng ngủ', 5, true, true, false, '5678'),
   ];
 
-  // ── Gara ───────────────────────────────────────────────────────
   const garage: SmartDevice[] = [
     new SmartLight('D10', 'Đèn gara', 100, true, true, 100, 'Daylight'),
     new SmartLock('D11', 'Khóa gara', 5, true, true, true, '0000'),
   ];
 
-  // ── DEMO ĐA HÌNH: In công suất từng thiết bị ──────────────────
-  // (Chỉ chạy trong development mode, giúp minh họa khi bảo vệ)
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     console.group('🔌 ĐA HÌNH (Polymorphism) — getPowerConsumption()');
     const allDevices = [...livingRoom, ...kitchen, ...bedroom, ...garage];
@@ -101,18 +59,14 @@ function createInitialRooms(): RoomData[] {
       console.log(`  ${d.toString()}`);
     });
 
-    // Demo Operator Overloading
     console.groupEnd();
     console.group('➕ NẠP CHỒNG TOÁN TỬ — SmartDevice.combinePower()');
-    const light = livingRoom[0]; // SmartLight
-    const ac = livingRoom[2]; // SmartAC
+    const light = livingRoom[0]; 
+    const ac = livingRoom[2]; 
     console.log(`  ${light.name} + ${ac.name} = ${SmartDevice.combinePower(light, ac).toFixed(1)}W`);
     console.groupEnd();
   }
 
-  // ── Serialize OOP instances → Plain Objects cho Zustand ────────
-  // .toJSON() chuyển class instance thành object thuần để React
-  // có thể track reactivity (React không track class instances).
   return [
     { id: 'room-1', name: 'Phòng Khách', icon: 'sofa', devices: livingRoom.map((d) => d.toJSON()) },
     { id: 'room-2', name: 'Nhà Bếp', icon: 'cooking-pot', devices: kitchen.map((d) => d.toJSON()) },
@@ -131,10 +85,6 @@ const INITIAL_LOGS: ActivityLog[] = [
 ];
 
 let logCounter = INITIAL_LOGS.length;
-
-// ─────────────────────────────────────────────────────────────────────
-//  ZUSTAND STORE + PERSIST MIDDLEWARE
-// ─────────────────────────────────────────────────────────────────────
 
 interface SmartHomeStore {
   hubName: string;
@@ -157,22 +107,12 @@ interface SmartHomeStore {
   addChatMessage: (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
   clearChatHistory: () => void;
 
-  // ── CRUD: Phòng & Thiết bị ──
   addRoom: (name: string, icon: string) => string;
   removeRoom: (roomId: string) => void;
   addDevice: (roomId: string, device: DeviceData) => void;
   removeDevice: (roomId: string, deviceId: string) => void;
 }
 
-/**
- * Zustand Store với `persist` middleware.
- *
- * PERSIST MIDDLEWARE:
- *   - Tự động serialize state → localStorage mỗi khi state thay đổi.
- *   - Khi load trang (F5), tự động đọc từ localStorage → khôi phục state.
- *   - `partialize`: chỉ lưu rooms + activityLogs (không lưu UI state).
- *   - SSR-safe: chỉ truy cập localStorage trên client (browser).
- */
 export const useSmartHomeStore = create<SmartHomeStore>()(
   persist(
     (set) => ({
@@ -287,7 +227,6 @@ export const useSmartHomeStore = create<SmartHomeStore>()(
       })),
       clearChatHistory: () => set({ chatHistory: [] }),
 
-      // ── CRUD: Thêm / Xóa Phòng ──
       addRoom: (name, icon) => {
         const newId = `room-${Date.now()}`;
         const newRoom: RoomData = { id: newId, name, icon, devices: [] };
@@ -300,7 +239,6 @@ export const useSmartHomeStore = create<SmartHomeStore>()(
           rooms: state.rooms.filter((r) => r.id !== roomId),
         })),
 
-      // ── CRUD: Thêm / Xóa Thiết bị ──
       addDevice: (roomId, device) =>
         set((state) => ({
           rooms: state.rooms.map((room) =>
@@ -320,12 +258,9 @@ export const useSmartHomeStore = create<SmartHomeStore>()(
         })),
     }),
     {
-      name: 'smart-home-hub-storage', // Key trong localStorage
+      name: 'smart-home-hub-storage', 
       storage: createJSONStorage(() => localStorage),
-      /**
-       * partialize: chỉ lưu dữ liệu cốt lõi vào localStorage.
-       * Không lưu UI state (sidebar, activeView) vì chúng không quan trọng.
-       */
+
       partialize: (state) => ({
         rooms: state.rooms,
         activityLogs: state.activityLogs,

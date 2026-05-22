@@ -14,13 +14,13 @@ class Device(Base):
     id = Column(Integer, primary_key=True, index=True)
     device_id = Column(String, unique=True, index=True)
     name = Column(String)
-    type = Column(String) # "Light", "AC", "Lock"
+    type = Column(String) 
     status = Column(Boolean, default=False)
     base_power = Column(Float, default=0.0)
-    param = Column(Float, default=0.0) # Brightness for Light, Temp for AC
+    param = Column(Float, default=0.0) 
     is_online = Column(Boolean, default=True)
     room_id = Column(Integer, ForeignKey("rooms.id"))
-    
+
     room = relationship("Room", back_populates="devices")
 
 class DeviceLog(Base):

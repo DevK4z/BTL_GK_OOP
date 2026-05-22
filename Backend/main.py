@@ -12,20 +12,19 @@ app = FastAPI(title="Smart Home Hub API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For Next.js dev server
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Schemas
 class RoomCreate(BaseModel):
     name: str
 
 class DeviceCreate(BaseModel):
     device_id: str
     name: str
-    type: str # Light, AC, Lock
+    type: str 
     base_power: float
     room_id: int
     param: float = 0.0
@@ -36,7 +35,7 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            # Xử lý input từ client nếu cần
+
     except WebSocketDisconnect:
         websockets.manager.disconnect(websocket)
 
@@ -69,9 +68,9 @@ async def operate_device(device_id: str, db: Session = Depends(database.get_db))
     device = db.query(models.Device).filter(models.Device.device_id == device_id).first()
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
-    
+
     if not device.is_online:
-        # Ghi log lỗi kết nối
+
         log = models.DeviceLog(device_id=device_id, action="CONNECTION EXCEPTION")
         db.add(log)
         db.commit()
@@ -82,22 +81,19 @@ async def operate_device(device_id: str, db: Session = Depends(database.get_db))
         })
         raise HTTPException(status_code=503, detail="Device is offline")
 
-    # Đảo trạng thái
     device.status = not device.status
     action_str = "TURN_ON" if device.status else "TURN_OFF"
-    
-    # Ghi log
+
     log = models.DeviceLog(device_id=device_id, action=action_str)
     db.add(log)
     db.commit()
-    
-    # Broadcast cập nhật UI real-time
+
     await websockets.manager.broadcast({
         "event": "STATE_CHANGE",
         "device_id": device_id,
         "status": device.status
     })
-    
+
     return {"status": "success", "device_id": device_id, "new_state": device.status}
 
 @app.post("/devices/{device_id}/simulate-disconnect")
@@ -105,8 +101,8 @@ async def simulate_disconnect(device_id: str, db: Session = Depends(database.get
     device = db.query(models.Device).filter(models.Device.device_id == device_id).first()
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
-    
-    device.is_online = not device.is_online # Toggle online status
+
+    device.is_online = not device.is_online 
     db.commit()
     await websockets.manager.broadcast({
         "event": "DEVICE_OFFLINE" if not device.is_online else "DEVICE_ONLINE",
@@ -117,12 +113,12 @@ async def simulate_disconnect(device_id: str, db: Session = Depends(database.get
 @app.get("/system/power")
 def get_total_power(db: Session = Depends(database.get_db)):
     devices = db.query(models.Device).all()
-    # Gọi C++ Engine để tính tổng điện năng (Sử dụng OOP Logic trong C++)
+
     result = engine_runner.run_power_calculation(devices)
     return result
 
 @app.get("/routing/vacuum")
 def calculate_vacuum_route(start: str, end: str):
-    # Gọi C++ Engine để tính Dijkstra
+
     result = engine_runner.run_route(start, end)
     return result

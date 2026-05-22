@@ -11,7 +11,7 @@ export default function AIAdvisorPanel() {
   const apiKey = useSmartHomeStore(state => state.apiKey);
   const totalPower = getTotalSystemPower(rooms);
   const deviceInstances = rooms.flatMap(r => r.devices);
-  
+
   const [recommendations, setRecommendations] = useState<AIRecommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [successId, setSuccessId] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export default function AIAdvisorPanel() {
       }
     } catch (err) {
       console.warn("Lỗi phân tích AI, chuyển sang Local Fallback:", err);
-      
+
       const localRecommendations: AIRecommendation[] = [];
 
       const acOn = deviceInstances.find(d => d.type === 'SmartAC' && d.status);
@@ -68,22 +68,20 @@ export default function AIAdvisorPanel() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     fetchInsights();
-  }, [deviceInstances.length]); // Gọi lại khi thêm/bớt thiết bị
+  }, [deviceInstances.length]); 
 
   const handleExecute = (rec: AIRecommendation) => {
     const deviceId = rec.targetDeviceId;
     if (!deviceId) return;
 
-    // Tìm roomId của thiết bị
     const room = rooms.find(r => r.devices.some(d => d.id === deviceId));
     if (!room) return;
 
-    // Thực thi bật/tắt thiết bị hoặc khóa/mở khóa
     const device = deviceInstances.find(d => d.id === deviceId);
     if (device && device.type === 'SmartLock') {
-      // Gọi toggleLock từ store để thay đổi trạng thái khóa thực tế
+
       useSmartHomeStore.getState().toggleLock(room.id, deviceId);
       useSmartHomeStore.getState().addLog({
         message: `${device.name} đã được ${rec.suggestedAction === 'turn_on' ? 'khóa' : 'mở khóa'} (AI Action)`,
@@ -94,21 +92,19 @@ export default function AIAdvisorPanel() {
       toggleDevice(room.id, deviceId);
     }
 
-    // Kích hoạt hiệu ứng thành công tạm thời
     setSuccessId(deviceId);
     setTimeout(() => {
       setSuccessId(null);
-      // Refresh lại các khuyến nghị
+
       fetchInsights();
     }, 1500);
   };
 
   return (
     <div className="bg-[#131a2e] border border-white/5 rounded-2xl p-5 shadow-xl relative overflow-hidden">
-      {/* Background Glow */}
+
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full filter blur-2xl pointer-events-none" />
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
         <div className="flex items-center gap-2">
           <Sparkles className="text-blue-400 w-5 h-5 animate-pulse" />
@@ -126,7 +122,6 @@ export default function AIAdvisorPanel() {
         </button>
       </div>
 
-      {/* Loading State */}
       {loading ? (
         <div className="space-y-3 py-2">
           <div className="h-16 bg-white/5 animate-pulse rounded-xl" />
@@ -141,7 +136,7 @@ export default function AIAdvisorPanel() {
           {recommendations.map((rec, idx) => {
             const isWarning = rec.type === 'warning';
             const device = deviceInstances.find(d => d.id === rec.targetDeviceId);
-            
+
             return (
               <div 
                 key={idx}
@@ -161,7 +156,6 @@ export default function AIAdvisorPanel() {
                   </div>
                 </div>
 
-                {/* Nút hành động trực quan */}
                 {rec.actionable && rec.targetDeviceId && (
                   <button
                     onClick={() => handleExecute(rec)}

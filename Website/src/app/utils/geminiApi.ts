@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { ChatMessage, Room } from '../store';
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
@@ -22,7 +22,6 @@ export async function chatWithGemini(
     throw new Error("API Key is missing");
   }
 
-  // Chuyển đổi trạng thái phòng thành chuỗi mô tả
   const systemContext = `
 Bạn là Trợ lý ảo AI của hệ thống Smart Home Hub (BTL Giữa Kỳ OOP).
 Tên của bạn là "SmartHub AI". Bạn phải trả lời ngắn gọn, thân thiện và bằng tiếng Việt.
@@ -49,7 +48,6 @@ MỤC TIÊU CỦA BẠN:
 3. Nếu người dùng muốn kích hoạt các "chế độ" (như đi ngủ, ra khỏi nhà), hãy gọi hàm execute_macro.
 `;
 
-  // Định nghĩa các Tools (Function Calling) cho Gemini
   const tools = [
     {
       functionDeclarations: [
@@ -105,13 +103,11 @@ MỤC TIÊU CỦA BẠN:
     }
   ];
 
-  // Chuyển đổi lịch sử chat thành format của Gemini
   const contents = messages.map(msg => ({
     role: msg.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: msg.content }]
   }));
 
-  // Gắn System Instruction vào request body
   const requestBody = {
     system_instruction: {
       parts: [{ text: systemContext }]
@@ -139,8 +135,7 @@ MỤC TIÊU CỦA BẠN:
     }
 
     const data = await res.json();
-    
-    // Xử lý cả Text Response và Function Call
+
     const parts = data.candidates?.[0]?.content?.parts || [];
     let text = "";
     const functionCalls: GeminiFunctionCall[] = [];
@@ -172,7 +167,7 @@ export interface AIRecommendation {
   actionable: boolean;
   targetRoomIndex?: number;
   targetDeviceIndex?: number;
-  targetDeviceId?: string; // Tương thích với AIAdvisorPanel
+  targetDeviceId?: string; 
   suggestedAction?: "turn_on" | "turn_off";
 }
 

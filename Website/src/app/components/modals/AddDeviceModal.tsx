@@ -27,7 +27,6 @@ export default function AddDeviceModal({ open, onClose, roomId, roomName }: AddD
   const [type, setType] = useState<DeviceType>('SmartLight');
   const [basePower, setBasePower] = useState(60);
 
-  // Type-specific defaults
   const [brightness, setBrightness] = useState(100);
   const [color, setColor] = useState('Warm White');
   const [temperature, setTemperature] = useState(25);
@@ -58,13 +57,6 @@ export default function AddDeviceModal({ open, onClose, roomId, roomName }: AddD
 
     const deviceId = `D-${Date.now()}`;
 
-    /**
-     * OOP — Tạo thiết bị bằng từ khóa `new`, rồi .toJSON() → plain object.
-     * Đây là minh chứng rõ ràng cho:
-     *   - KẾ THỪA: SmartLight/SmartAC/SmartLock extends SmartDevice
-     *   - ĐÓNG GÓI: constructor kiểm tra tham số (brightness 0-100, temp 16-32)
-     *   - FACTORY: mỗi `new` tạo đúng lớp con
-     */
     let device: DeviceData;
     switch (type) {
       case 'SmartLight':
@@ -85,7 +77,6 @@ export default function AddDeviceModal({ open, onClose, roomId, roomName }: AddD
       icon: type === 'SmartLight' ? 'lightbulb' : type === 'SmartAC' ? 'thermometer' : 'lock',
     });
 
-    // Reset form
     setName('');
     setType('SmartLight');
     setBasePower(60);
@@ -119,7 +110,7 @@ export default function AddDeviceModal({ open, onClose, roomId, roomName }: AddD
         </div>
 
         <form onSubmit={handleSubmit} className="modal-dialog__body">
-          {/* Device Type Picker */}
+
           <div className="modal-field">
             <label className="modal-field__label">Loại thiết bị</label>
             <div className="modal-type-grid">
@@ -138,7 +129,6 @@ export default function AddDeviceModal({ open, onClose, roomId, roomName }: AddD
             </div>
           </div>
 
-          {/* Device Name */}
           <div className="modal-field">
             <label className="modal-field__label" htmlFor="device-name">
               Tên thiết bị
@@ -161,7 +151,6 @@ export default function AddDeviceModal({ open, onClose, roomId, roomName }: AddD
             />
           </div>
 
-          {/* Base Power */}
           <div className="modal-field">
             <label className="modal-field__label" htmlFor="device-power">
               Công suất cơ bản (W)
@@ -177,7 +166,6 @@ export default function AddDeviceModal({ open, onClose, roomId, roomName }: AddD
             />
           </div>
 
-          {/* Type-Specific Fields */}
           {type === 'SmartLight' && (
             <>
               <div className="modal-field">
@@ -246,7 +234,6 @@ export default function AddDeviceModal({ open, onClose, roomId, roomName }: AddD
             </div>
           )}
 
-          {/* Actions */}
           <div className="modal-dialog__actions">
             <button type="button" className="modal-btn modal-btn--cancel" onClick={onClose}>
               Hủy

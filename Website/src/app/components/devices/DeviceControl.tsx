@@ -54,7 +54,6 @@ export default function DeviceControl({ device, roomId }: DeviceControlProps) {
     });
   };
 
-  // SmartLight
   if (device.type === 'SmartLight') {
     const light = device as SmartLightDevice;
     return (
@@ -129,7 +128,6 @@ export default function DeviceControl({ device, roomId }: DeviceControlProps) {
     );
   }
 
-  // SmartAC
   if (device.type === 'SmartAC') {
     const ac = device as SmartACDevice;
     return (
@@ -208,7 +206,6 @@ export default function DeviceControl({ device, roomId }: DeviceControlProps) {
     );
   }
 
-  // SmartLock
   if (device.type === 'SmartLock') {
     const lock = device as SmartLockDevice;
     return (

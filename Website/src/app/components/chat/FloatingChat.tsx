@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -12,7 +12,6 @@ import {
   SetACTemperatureCommand 
 } from '../../models/Command';
 
-// Định nghĩa interface cho SpeechRecognition API (do TypeScript không có sẵn đầy đủ)
 interface ISpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -36,17 +35,16 @@ export default function FloatingChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  
-  // Khởi tạo SpeechRecognition
+
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
-  
+
   useEffect(() => {
     if (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'vi-VN'; // Ngôn ngữ Tiếng Việt
+      recognitionRef.current.lang = 'vi-VN'; 
 
       recognitionRef.current.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
@@ -69,7 +67,7 @@ export default function FloatingChat() {
       recognitionRef.current?.stop();
       setIsListening(false);
     } else {
-      setInput(''); // Xóa text cũ khi bắt đầu nói mới
+      setInput(''); 
       recognitionRef.current?.start();
       setIsListening(true);
     }
@@ -77,7 +75,7 @@ export default function FloatingChat() {
 
   const speakText = (text: string) => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      // Hủy đang đọc dở
+
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'vi-VN';
@@ -86,8 +84,7 @@ export default function FloatingChat() {
       window.speechSynthesis.speak(utterance);
     }
   };
-  
-  // Trạng thái từ Zustand store
+
   const { 
     apiKey, 
     setApiKey, 
@@ -102,7 +99,6 @@ export default function FloatingChat() {
   const [tempApiKey, setTempApiKey] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Cuộn xuống tin nhắn mới nhất
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -113,13 +109,12 @@ export default function FloatingChat() {
     }
   }, [chatHistory, isOpen]);
 
-  // Thực thi các lệnh bằng OOP Command Pattern
   const handleFunctionCalls = (functionCalls: any[]) => {
     if (!functionCalls || functionCalls.length === 0) return;
 
     functionCalls.forEach((fc) => {
       const { name, args } = fc;
-      
+
       if (name === 'execute_macro') {
         const macroName = args.macro_name;
         if (macroName === 'sleep_mode') {
@@ -163,7 +158,7 @@ export default function FloatingChat() {
     if (!input.trim() || isTyping) return;
 
     if (!apiKey) {
-      // Nếu chưa có API key thì lưu API key
+
       if (input.trim().startsWith('AIza')) {
         setApiKey(input.trim());
         addChatMessage({
@@ -191,14 +186,13 @@ export default function FloatingChat() {
     setIsTyping(true);
 
     try {
-      // Lấy toàn bộ lịch sử (bao gồm tin nhắn user vừa thêm)
+
       const currentHistory = useSmartHomeStore.getState().chatHistory;
-      
+
       const response = await chatWithGemini(currentHistory, apiKey, rooms);
-      
+
       let displayMessage = response.text;
-      
-      // Nếu có gọi hàm, thực thi
+
       if (response.functionCalls && response.functionCalls.length > 0) {
         handleFunctionCalls(response.functionCalls);
         if (!displayMessage) {
@@ -207,15 +201,14 @@ export default function FloatingChat() {
       }
 
       addChatMessage({ role: 'assistant', content: displayMessage });
-      
-      // Đọc phản hồi bằng giọng nói (nếu vừa thu âm hoặc mặc định bật TTS)
+
       speakText(displayMessage);
     } catch (error: any) {
       addChatMessage({ 
         role: 'assistant', 
         content: `❌ Lỗi: ${error.message}. Bạn kiểm tra lại API Key hoặc mạng nhé!` 
       });
-      // Tùy chọn: Xóa API key nếu bị lỗi xác thực
+
       if (error.message.includes('API_KEY_INVALID')) {
         setApiKey('');
       }
@@ -226,7 +219,7 @@ export default function FloatingChat() {
 
   return (
     <>
-      {/* Nút bấm Floating */}
+
       <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -238,13 +231,12 @@ export default function FloatingChat() {
         </button>
       </div>
 
-      {/* Cửa sổ Chat */}
       <div 
         className={`fixed bottom-24 right-6 w-[360px] h-[520px] bg-[#131a2e]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex flex-col z-50 transition-all duration-300 transform origin-bottom-right ${
           isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 pointer-events-none translate-y-8'
         }`}
       >
-        {/* Header */}
+
         <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#1a233a] to-[#131a2e] border-b border-white/10 rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="bg-blue-500/20 text-blue-400 p-2 rounded-xl border border-blue-500/20">
@@ -263,7 +255,6 @@ export default function FloatingChat() {
           </button>
         </div>
 
-        {/* Thông báo nhập API Key (Nếu chưa có) */}
         {!apiKey && chatHistory.length === 0 && (
           <div className="p-4 m-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-200 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 font-semibold text-blue-400">
@@ -273,9 +264,8 @@ export default function FloatingChat() {
           </div>
         )}
 
-        {/* Message List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
-          {/* Tin nhắn chào mừng mặc định */}
+
           {chatHistory.length === 0 && apiKey && (
              <div className="flex items-start gap-2 max-w-[85%]">
                <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
@@ -294,14 +284,13 @@ export default function FloatingChat() {
                 msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''
               }`}
             >
-              {/* Avatar */}
+
               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
                 msg.role === 'user' ? 'bg-blue-600 text-white hidden' : 'bg-blue-500/20 border border-blue-500/20 text-blue-400'
               }`}>
                 {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
               </div>
-              
-              {/* Message Bubble */}
+
               <div className={`p-3 text-[14px] shadow-sm leading-relaxed ${
                 msg.role === 'user' 
                   ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' 
@@ -311,7 +300,7 @@ export default function FloatingChat() {
               </div>
             </div>
           ))}
-          
+
           {isTyping && (
             <div className="flex items-start gap-2 max-w-[85%]">
               <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
@@ -327,7 +316,6 @@ export default function FloatingChat() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
         <div className="p-3 bg-gradient-to-t from-[#131a2e] to-transparent border-t border-white/5 rounded-b-2xl mt-auto">
           <form 
             onSubmit={handleSend}

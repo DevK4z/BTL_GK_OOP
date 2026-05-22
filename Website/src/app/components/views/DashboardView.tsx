@@ -38,13 +38,11 @@ export default function DashboardView({
     ? rooms.find((r) => r.id === selectedRoomId)
     : null;
 
-  // Form State cho "Thêm Thiết Bị Nhanh" (Polymorphic UI)
   const [formRoomId, setFormRoomId] = useState(rooms[0]?.id || '');
   const [deviceName, setDeviceName] = useState('');
   const [deviceType, setDeviceType] = useState<'SmartLight' | 'SmartAC' | 'SmartLock'>('SmartLight');
   const [basePower, setBasePower] = useState(60);
 
-  // Dynamic States
   const [brightness, setBrightness] = useState(100);
   const [color, setColor] = useState('Warm White');
   const [temperature, setTemperature] = useState(25);
@@ -64,9 +62,6 @@ export default function DashboardView({
     const deviceId = `D-${Date.now()}`;
     let newDeviceInstance;
 
-    // OOP Polymorphism & Encapsulation:
-    // Tạo đối tượng thực tế bằng "new" để kiểm tra tính hợp lệ dữ liệu (đóng gói)
-    // trước khi đưa vào Database/Zustand Store.
     if (deviceType === 'SmartLight') {
       newDeviceInstance = new SmartLight(deviceId, deviceName.trim(), basePower, true, true, brightness, color);
     } else if (deviceType === 'SmartAC') {
@@ -77,7 +72,6 @@ export default function DashboardView({
 
     addDevice(formRoomId, newDeviceInstance.toJSON());
 
-    // Thêm vào Activity Log
     const targetRoom = rooms.find(r => r.id === formRoomId);
     addLog({
       message: `Thêm thiết bị "${deviceName.trim()}" vào ${targetRoom?.name || 'phòng'}`,
@@ -85,7 +79,6 @@ export default function DashboardView({
       icon: deviceType === 'SmartLight' ? 'lightbulb' : deviceType === 'SmartAC' ? 'thermometer' : 'lock'
     });
 
-    // Reset Form
     setDeviceName('');
     setBrightness(100);
     setColor('Warm White');
@@ -127,8 +120,7 @@ export default function DashboardView({
 
       <section className="content-grid" id="content-section">
         <div className="content-grid__main space-y-6">
-          
-          {/* Khu Vực Hoạt Động */}
+
           <div>
             <h2 className="section-title">🏠 Khu Vực Hoạt Động</h2>
             <div className="rooms-grid">
@@ -150,16 +142,15 @@ export default function DashboardView({
             </div>
           </div>
 
-          {/* Form Thêm Thiết Bị Nhanh (Polymorphic UI) */}
           <div className="bg-[#131a2e] border border-white/5 rounded-2xl p-5 shadow-xl">
             <h3 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
               <Plus size={18} className="text-blue-400" />
               Thêm Thiết Bị Nhanh (Polymorphic UI Form)
             </h3>
-            
+
             <form onSubmit={handleAddDeviceSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
-                {/* Chọn Phòng */}
+
                 <div>
                   <label className="text-xs text-gray-400 block mb-1">Chọn Phòng nhận thiết bị</label>
                   <select 
@@ -173,7 +164,6 @@ export default function DashboardView({
                   </select>
                 </div>
 
-                {/* Chọn Loại Thiết Bị */}
                 <div>
                   <label className="text-xs text-gray-400 block mb-1">Loại thiết bị</label>
                   <div className="grid grid-cols-3 gap-2">
@@ -199,7 +189,6 @@ export default function DashboardView({
                   </div>
                 </div>
 
-                {/* Tên Thiết Bị */}
                 <div>
                   <label className="text-xs text-gray-400 block mb-1">Tên thiết bị</label>
                   <input
@@ -213,7 +202,6 @@ export default function DashboardView({
                 </div>
               </div>
 
-              {/* Phân thân Đa Hình của Form (Polymorphic inputs) */}
               <div className="flex flex-col justify-between space-y-3">
                 <div>
                   <label className="text-xs text-gray-400 block mb-1">Công suất cơ bản (W)</label>
@@ -226,7 +214,6 @@ export default function DashboardView({
                   />
                 </div>
 
-                {/* Phần input đa hình động */}
                 <div className="p-3 bg-[#0f1525] border border-white/5 rounded-xl flex-grow flex flex-col justify-center">
                   {deviceType === 'SmartLight' && (
                     <div className="space-y-3">
@@ -332,7 +319,6 @@ export default function DashboardView({
         <EnergyChart />
       </section>
 
-      {/* Tích hợp Trợ lý AI Chatbot */}
       <FloatingChat />
     </>
   );

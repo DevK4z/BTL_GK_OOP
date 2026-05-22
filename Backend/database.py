@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
-# Vercel Postgres URL from env, or a local sqlite fallback for testing
 SQLALCHEMY_DATABASE_URL = os.getenv("POSTGRES_URL", "sqlite:///./smart_home.db")
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)

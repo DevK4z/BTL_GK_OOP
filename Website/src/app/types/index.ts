@@ -7,12 +7,12 @@ export interface DeviceData {
   status: boolean;
   basePower: number;
   isOnline: boolean;
-  // SmartLight specific
+
   brightness?: number;
   color?: string;
-  // SmartAC specific
+
   temperature?: number;
-  // SmartLock specific
+
   isLocked?: boolean;
   passcode?: string;
 }
@@ -36,6 +36,5 @@ export interface ActivityLog {
   icon: string;
 }
 
-// Re-export type aliases for backward compatibility where 'Device' and 'Room' were used
 export type Device = DeviceData;
 export type Room = RoomData;

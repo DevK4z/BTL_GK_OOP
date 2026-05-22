@@ -92,7 +92,7 @@ export default function AddRoomModal({ open, onClose, onSuccess }: AddRoomModalP
         </div>
 
         <form onSubmit={handleSubmit} className="modal-dialog__body">
-          {/* Room Name */}
+
           <div className="modal-field">
             <label className="modal-field__label" htmlFor="room-name">
               Tên phòng
@@ -109,7 +109,6 @@ export default function AddRoomModal({ open, onClose, onSuccess }: AddRoomModalP
             />
           </div>
 
-          {/* Icon Picker */}
           <div className="modal-field">
             <label className="modal-field__label">Biểu tượng</label>
             <div className="modal-icon-grid">
@@ -128,7 +127,6 @@ export default function AddRoomModal({ open, onClose, onSuccess }: AddRoomModalP
             </div>
           </div>
 
-          {/* Actions */}
           <div className="modal-dialog__actions">
             <button type="button" className="modal-btn modal-btn--cancel" onClick={onClose}>
               Hủy

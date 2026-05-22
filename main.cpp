@@ -70,7 +70,7 @@ public:
     std::vector<std::string> findShortestPath(const std::string& start, const std::string& end) {
         std::unordered_map<std::string, double> dist;
         std::unordered_map<std::string, std::string> prev;
-        
+
         for (const auto& pair : adj) {
             dist[pair.first] = 1e9;
         }
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
         graph.addEdge("Kitchen", "Bedroom2", 6.0);
 
         auto path = graph.findShortestPath(start, end);
-        
+
         cout << "{ \"status\": \"success\", \"path\": [";
         for (size_t i = 0; i < path.size(); ++i) {
             cout << "\"" << path[i] << "\"";
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
             if (dev_str.empty()) continue;
             auto props = split(dev_str, ',');
             if (props.size() < 4) continue;
-            
+
             string type = props[0];
             double bp = stod(props[1]);
             bool status = stoi(props[2]);

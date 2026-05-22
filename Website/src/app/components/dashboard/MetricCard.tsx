@@ -24,11 +24,7 @@ export default function MetricCard({
   accent,
   animateValue = false,
 }: MetricCardProps) {
-  /**
-   * FIX: Animate from PREVIOUS value → NEW value (not from 0).
-   * Prevents the "0.0W flash" when toggling devices.
-   * Uses a ref to track the previous value across renders.
-   */
+
   const prevValueRef = useRef<number>(typeof value === 'number' ? value : 0);
   const [animatedValue, setAnimatedValue] = useState<number>(
     typeof value === 'number' ? value : 0,
@@ -39,23 +35,22 @@ export default function MetricCard({
 
     const startVal = prevValueRef.current;
     const endVal = value;
-    prevValueRef.current = value; // Save for next animation
+    prevValueRef.current = value; 
 
-    // If values are the same, skip animation
     if (Math.abs(startVal - endVal) < 0.01) {
       setAnimatedValue(endVal);
       return;
     }
 
-    const duration = 800; // ms
-    const stepTime = 16; // ~60fps
+    const duration = 800; 
+    const stepTime = 16; 
     const steps = duration / stepTime;
     const increment = (endVal - startVal) / steps;
     let current = startVal;
 
     const timer = setInterval(() => {
       current += increment;
-      // Check if we've reached or passed the target
+
       if (
         (increment > 0 && current >= endVal) ||
         (increment < 0 && current <= endVal)
@@ -70,7 +65,6 @@ export default function MetricCard({
     return () => clearInterval(timer);
   }, [value, animateValue]);
 
-  // For non-animated or non-number values, show directly
   const displayValue =
     animateValue && typeof value === 'number' ? animatedValue : value;
 

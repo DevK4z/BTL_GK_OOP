@@ -31,15 +31,13 @@ export default function HeroBanner() {
 
   return (
     <div className="hero-banner" id="hero-banner">
-      {/* Animated background orbs */}
+
       <div className="hero-banner__orb hero-banner__orb--1" />
       <div className="hero-banner__orb hero-banner__orb--2" />
       <div className="hero-banner__orb hero-banner__orb--3" />
 
-      {/* Mesh grid overlay */}
       <div className="hero-banner__grid" />
 
-      {/* Content */}
       <div className="hero-banner__content">
         <div className="hero-banner__text">
           <span className="hero-banner__greeting">
@@ -72,7 +70,6 @@ export default function HeroBanner() {
           </div>
         </div>
 
-        {/* Quick Stats */}
         <div className="hero-banner__stats">
           <div className="hero-stat">
             <div className="hero-stat__icon hero-stat__icon--blue">

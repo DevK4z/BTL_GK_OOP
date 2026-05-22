@@ -36,7 +36,7 @@ export default function Home() {
       <Sidebar />
 
       <main className="main-content" id="main-content">
-        {/* Page Header */}
+
         <header className="page-header">
           <div>
             <h1 className="page-header__title">
@@ -94,7 +94,7 @@ export default function Home() {
             )}
 
             {activeView === 'logs' && <LogsView />}
-            
+
             {activeView === 'oop' && <OOPView />}
           </>
         ) : (
@@ -104,7 +104,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* ===== MODALS ===== */}
       <AddRoomModal
         open={showAddRoom}
         onClose={() => setShowAddRoom(false)}
