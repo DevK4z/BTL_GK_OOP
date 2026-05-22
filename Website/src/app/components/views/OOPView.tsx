@@ -1,9 +1,9 @@
-import OOPDemoView from './OOPDemoView';
+import OOPShowcase from '../oop/OOPShowcase';
 
 export default function OOPView() {
   return (
     <section className="oop-view">
-      <OOPDemoView />
+      <OOPShowcase />
     </section>
   );
 }

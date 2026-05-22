@@ -1,15 +1,10 @@
-'use client';
-
-import { useState } from 'react';
-import { Zap, Cpu, ShieldCheck, Plus, PlusCircle } from 'lucide-react';
+import { Zap, Cpu, ShieldCheck, Plus } from 'lucide-react';
 import MetricCard from '../dashboard/MetricCard';
 import HeroBanner from '../dashboard/HeroBanner';
 import RoomCard from '../rooms/RoomCard';
 import DeviceControl from '../devices/DeviceControl';
 import ActivityFeed from '../dashboard/ActivityFeed';
-import AIAdvisorPanel from '../dashboard/AIAdvisorPanel';
 import EnergyChart from '../dashboard/EnergyChart';
-import AddDeviceForm from '../devices/AddDeviceForm';
 import type { RoomData } from '../../types';
 
 interface DashboardViewProps {
@@ -31,7 +26,6 @@ export default function DashboardView({
   setSelectedRoomId,
   setShowAddRoom,
 }: DashboardViewProps) {
-  const [showAddDevice, setShowAddDevice] = useState(false);
   const selectedRoom = selectedRoomId
     ? rooms.find((r) => r.id === selectedRoomId)
     : null;
@@ -91,27 +85,10 @@ export default function DashboardView({
 
           {selectedRoom && (
             <div className="room-detail" id="room-detail">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="room-detail__title m-0">
-                  Thiết bị trong {selectedRoom.name}
-                </h3>
-                <button
-                  onClick={() => setShowAddDevice(!showAddDevice)}
-                  className="flex items-center gap-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <PlusCircle size={16} />
-                  Thêm thiết bị
-                </button>
-              </div>
-              
-              {showAddDevice && (
-                <AddDeviceForm 
-                  roomId={selectedRoom.id} 
-                  onClose={() => setShowAddDevice(false)} 
-                />
-              )}
-
-              <div className="room-detail__devices mt-4">
+              <h3 className="room-detail__title">
+                Thiết bị trong {selectedRoom.name}
+              </h3>
+              <div className="room-detail__devices">
                 {selectedRoom.devices.map((device) => (
                   <DeviceControl
                     key={device.id}
@@ -126,7 +103,6 @@ export default function DashboardView({
 
         <div className="content-grid__side">
           <ActivityFeed />
-          <AIAdvisorPanel />
         </div>
       </section>
 
