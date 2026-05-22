@@ -11,9 +11,6 @@
 
 using namespace std;
 
-// ==========================================
-// YÊU CẦU OOP: CÁC LỚP THIẾT BỊ (DEVICES)
-// ==========================================
 class Device {
 protected:
     std::string id_;
@@ -61,10 +58,6 @@ public:
     }
 };
 
-
-// ==========================================
-// YÊU CẦU 3: THUẬT TOÁN DIJKSTRA
-// ==========================================
 class FloorPlanGraph {
 private:
     std::unordered_map<std::string, std::vector<std::pair<std::string, double>>> adj;
@@ -78,7 +71,6 @@ public:
         std::unordered_map<std::string, double> dist;
         std::unordered_map<std::string, std::string> prev;
         
-        // Khởi tạo khoảng cách vô cực
         for (const auto& pair : adj) {
             dist[pair.first] = 1e9;
         }
@@ -94,7 +86,7 @@ public:
             pq.pop();
 
             if (d > dist[u]) continue;
-            if (u == end) break; // Đã tìm thấy đích
+            if (u == end) break;
 
             for (const auto& edge : adj[u]) {
                 std::string v = edge.first;
@@ -109,10 +101,9 @@ public:
 
         std::vector<std::string> path;
         if (dist.find(end) == dist.end() || dist[end] == 1e9) {
-            return path; // Không có đường đi
+            return path;
         }
 
-        // Truy xuất ngược để lấy đường đi
         for (std::string at = end; at != ""; at = prev[at]) {
             path.push_back(at);
             if (at == start) break;
@@ -122,7 +113,6 @@ public:
     }
 };
 
-// Hàm tiện ích tách chuỗi
 std::vector<std::string> split(const std::string &s, char delim) {
     std::vector<std::string> result;
     std::stringstream ss(s);
@@ -133,9 +123,6 @@ std::vector<std::string> split(const std::string &s, char delim) {
     return result;
 }
 
-// ==========================================
-// CLI ENGINE (Giao tiếp JSON qua Stdout)
-// ==========================================
 int main(int argc, char* argv[]) {
     if (argc < 3) {
         cout << "{\"error\": \"Missing arguments\"}" << endl;
@@ -157,7 +144,6 @@ int main(int argc, char* argv[]) {
         }
 
         FloorPlanGraph graph;
-        // Khởi tạo đồ thị các phòng trong nhà
         graph.addEdge("Dock", "Hallway", 2.0);
         graph.addEdge("Hallway", "LivingRoom", 3.0);
         graph.addEdge("Hallway", "Kitchen", 4.0);
@@ -174,8 +160,6 @@ int main(int argc, char* argv[]) {
         cout << "] }" << endl;
     }
     else if (action == "power") {
-        // Tham số truyền vào dạng chuỗi: Type,BasePower,Status,Param;...
-        // Ví dụ: --devices "Light,10,1,50;AC,100,1,20;Lock,5,1,0"
         string devices_str = "";
         for (int i = 1; i < argc; ++i) {
             if (string(argv[i]) == "--devices" && i + 1 < argc) devices_str = argv[i+1];
