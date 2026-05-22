@@ -96,7 +96,7 @@ export default function AIAdvisorPanel() {
     setTimeout(() => {
       setSuccessId(null);
 
-      fetchInsights();
+      setRecommendations(prev => prev.filter(r => r.id !== rec.id));
     }, 1500);
   };
 
