@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === 'production';
+
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: "/BTL_GK_OOP",
-  assetPrefix: "/BTL_GK_OOP",
+  basePath: isProd ? "/BTL_GK_OOP" : "",
   images: {
     unoptimized: true,
   },
