@@ -10,25 +10,27 @@ const COMPARISON_TABS = [
     desc: 'Lớp trừu tượng và Đa hình trong việc tính toán điện năng của thiết bị.',
     cpp: `// C++: Lớp trừu tượng và Đa hình
 class Device {
-protected:
-    std::string id_;
-    std::string name_;
-    bool status_;
-    double base_power_;
-public:
-    // Phương thức thuần ảo (pure virtual function)
-    virtual double get_power_consumption() = 0; 
+    protected:
+        string id;
+        string name;
+        bool status;
+        double power;
+        bool onl;
+    public:
+        // Phương thức thuần ảo (pure virtual function)
+        virtual double get_power_consumption() = 0; 
 };
 
 class SmartLight : public Device {
-private:
-    int brightness_;
-public:
-    // Nạp chồng (Override) phương thức lớp cha
-    double get_power_consumption() override {
-        if (!status_) return 0.0;
-        return base_power_ * (brightness_ / 100.0);
-    }
+    private:
+        int bright;
+        string color;
+    public:
+        // Nạp chồng (Override) phương thức lớp cha
+        double get_power_consumption() override {
+            if (!status) return 0.0;
+            return power * (bright / 100.0);
+        }
 };`,
     ts: `// TypeScript: Lớp trừu tượng và Đa hình
 export abstract class SmartDevice {
@@ -55,19 +57,19 @@ export class SmartLight extends SmartDevice {
     desc: 'Quản lý danh sách thiết bị đa hình trong phòng/nhà.',
     cpp: `// C++: Dùng smart pointer quản lý đa hình tránh rò rỉ bộ nhớ
 class Room {
-private:
-    std::string room_name_;
-    // Quản lý đa hình qua con trỏ thông minh (shared_ptr)
-    std::vector<std::shared_ptr<Device>> devices_;
-public:
-    double getRoomPower() const {
-        double total = 0.0;
-        for (const auto &dev : devices_) {
-            // Liên kết động (Late Binding) gọi hàm thực tế của lớp con
-            total += dev->get_power_consumption(); 
+    private:
+        string name;
+        // Quản lý đa hình qua con trỏ thông minh (shared_ptr)
+        vector<shared_ptr<Device>> devices;
+    public:
+        double get_room_power() const {
+            double total = 0.0;
+            for (const auto &dev : devices) {
+                // Liên kết động (Late Binding) gọi hàm thực tế của lớp con
+                total += dev->get_power_consumption(); 
+            }
+            return total;
         }
-        return total;
-    }
 };`,
     ts: `// TypeScript: Quản lý con trỏ tham chiếu tự động (Garbage Collection)
 export interface RoomData {
@@ -90,13 +92,13 @@ const deviceInstances = rooms.map(room => {
     desc: 'Nạp chồng toán tử cộng công suất tiêu thụ của 2 thiết bị.',
     cpp: `// C++: Nạp chồng toán tử +
 class Device {
-public:
-    // Cho phép cộng trực tiếp: deviceA + deviceB
-    friend double operator+(const Device &a, const Device &b) {
-        return a.get_power_const() + b.get_power_const();
-    }
-protected:
-    virtual double get_power_const() const = 0;
+    public:
+        // Cho phép cộng trực tiếp: deviceA + deviceB
+        friend double operator+(const Device &a, const Device &b) {
+            return a.get_power_const() + b.get_power_const();
+        }
+    protected:
+        virtual double get_power_const() const = 0;
 };
 
 // Sử dụng:
@@ -135,7 +137,7 @@ const OOP_CONCEPTS = [
     icon: '📦',
     title: 'Đóng gói (Encapsulation)',
     desc: 'Bảo vệ dữ liệu bằng phạm vi truy cập private/protected.',
-    cppCode: 'protected: std::string id_;',
+    cppCode: 'protected: string id;',
     tsCode: 'private readonly _id: string;'
   },
   {
