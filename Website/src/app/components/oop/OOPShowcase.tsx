@@ -35,19 +35,19 @@ class SmartLight : public Device {
     ts: `// TypeScript: Lớp trừu tượng và Đa hình
 export abstract class SmartDevice {
   protected _status: boolean;
-  protected _basePower: number;
+  protected _power: number;
 
   // Phương thức trừu tượng (abstract method)
   abstract getPowerConsumption(): number;
 }
 
 export class SmartLight extends SmartDevice {
-  private _brightness: number;
+  private _bright: number;
 
   // Nạp chồng (Override) tương tự C++
   getPowerConsumption(): number {
     if (!this._status) return 0;
-    return this._basePower * (this._brightness / 100);
+    return this._power * (this._bright / 100);
   }
 }`
   },
