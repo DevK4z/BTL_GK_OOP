@@ -3,48 +3,37 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Brain, AlertTriangle, AlertCircle, Play, Check, RefreshCw } from 'lucide-react';
 import { useSmartHome } from '../../hooks/useSmartHome';
-import { useSmartHomeStore } from '../../store';
-
-interface AIRecommendation {
-  type: "warning" | "suggestion";
-  title: string;
-  message: string;
-  actionable: boolean;
-  targetDeviceId: string;
-  suggestedAction: "turn_on" | "turn_off";
-}
+import { useSmartHomeStore, getTotalSystemPower } from '../../store';
+import { analyzeHomeStateWithAI, AIRecommendation } from '../../utils/geminiApi';
 
 export default function AIAdvisorPanel() {
-  const { deviceInstances, rooms, toggleDevice } = useSmartHome();
+  const { rooms, toggleDevice } = useSmartHomeStore();
+  const apiKey = useSmartHomeStore(state => state.apiKey);
+  const totalPower = getTotalSystemPower(rooms);
+  const deviceInstances = rooms.flatMap(r => r.devices);
+  
   const [recommendations, setRecommendations] = useState<AIRecommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [successId, setSuccessId] = useState<string | null>(null);
 
   const fetchInsights = async () => {
     setLoading(true);
+    setRecommendations([]);
+
     try {
-      const plainDevices = deviceInstances.map(d => d.toJSON());
-      const res = await fetch('/api/ai-advisor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ devices: plainDevices })
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      const data = await res.json();
-      if (data.recommendations) {
-        setRecommendations(data.recommendations);
+      const data = await analyzeHomeStateWithAI(rooms, totalPower, apiKey);
+      if (Array.isArray(data)) {
+         setRecommendations(data);
       }
     } catch (err) {
-      console.warn("AI API Route không khả dụng (đang chạy tĩnh trên GitHub Pages). Chuyển sang AI Advisor Engine cục bộ:", err);
+      console.warn("Lỗi phân tích AI, chuyển sang Local Fallback:", err);
       
       const localRecommendations: AIRecommendation[] = [];
 
-      // 1. Kiểm tra Điều hòa (SmartAC) đang bật tiêu thụ nhiều điện
       const acOn = deviceInstances.find(d => d.type === 'SmartAC' && d.status);
       if (acOn) {
         localRecommendations.push({
+          id: `local-${Date.now()}`,
           type: "suggestion",
           title: "Tối ưu hóa Điều Hòa (Local AI)",
           message: `Điều hòa "${acOn.name}" đang bật. Khuyên dùng nhiệt độ 26°C hoặc tắt để tiết kiệm điện.`,
@@ -54,20 +43,6 @@ export default function AIAdvisorPanel() {
         });
       }
 
-      // 2. Kiểm tra Đèn (SmartLight) đang bật
-      const lightOn = deviceInstances.find(d => d.type === 'SmartLight' && d.status);
-      if (lightOn) {
-        localRecommendations.push({
-          type: "warning",
-          title: "Thiết bị chưa tắt (Local AI)",
-          message: `Đèn "${lightOn.name}" đang bật. Hãy tắt bớt các thiết bị không cần thiết.`,
-          actionable: true,
-          targetDeviceId: lightOn.id,
-          suggestedAction: "turn_off"
-        });
-      }
-
-      // 3. Kiểm tra Khóa (SmartLock) đang mở khóa
       const unlockedLock = deviceInstances.find(d => {
         if (d.type === 'SmartLock') {
           return (d as any).isLocked === false;
@@ -76,23 +51,13 @@ export default function AIAdvisorPanel() {
       });
       if (unlockedLock) {
         localRecommendations.push({
+          id: `local-${Date.now()}-2`,
           type: "warning",
           title: "Bảo mật cửa ra vào (Local AI)",
           message: `Cửa "${unlockedLock.name}" đang MỞ KHÓA. Bạn có muốn khóa cửa lại ngay không?`,
           actionable: true,
           targetDeviceId: unlockedLock.id,
           suggestedAction: "turn_on"
-        });
-      }
-
-      if (localRecommendations.length === 0) {
-        localRecommendations.push({
-          type: "suggestion",
-          title: "Hệ thống tối ưu (Local AI)",
-          message: "Tất cả thiết bị đang hoạt động ở chế độ tiết kiệm năng lượng cực đại.",
-          actionable: false,
-          targetDeviceId: "",
-          suggestedAction: "turn_off"
         });
       }
 
