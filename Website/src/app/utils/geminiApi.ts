@@ -18,7 +18,8 @@ export async function chatWithGemini(
   apiKey: string,
   rooms: Room[]
 ): Promise<ChatResponse> {
-  if (!apiKey) {
+  const finalApiKey = apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBPVzSO1qPnnFeGNLoclpG_JeQruSDMmsQ';
+  if (!finalApiKey) {
     throw new Error("API Key is missing");
   }
 
@@ -121,7 +122,7 @@ MỤC TIÊU CỦA BẠN:
   };
 
   try {
-    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    const res = await fetch(`${GEMINI_API_URL}?key=${finalApiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -176,9 +177,7 @@ export async function analyzeHomeStateWithAI(
   totalPower: number,
   apiKey: string
 ): Promise<AIRecommendation[]> {
-  const envKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  const finalKey = envKey || apiKey;
-
+  const finalKey = apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBPVzSO1qPnnFeGNLoclpG_JeQruSDMmsQ';
   if (!finalKey) {
     throw new Error("Không tìm thấy API Key. Vui lòng thêm NEXT_PUBLIC_GEMINI_API_KEY vào .env hoặc nhập ở Floating Chat.");
   }
