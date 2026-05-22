@@ -103,6 +103,7 @@ export default function AIAdvisorPanel() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchInsights();
   }, [deviceInstances.length]); // Gọi lại khi thêm/bớt thiết bị
 

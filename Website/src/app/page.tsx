@@ -12,13 +12,17 @@ import LogsView from './components/views/LogsView';
 import OOPView from './components/views/OOPView';
 import { useSmartHomeStore } from './store';
 import { useSmartHome } from './hooks/useSmartHome';
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
 export default function Home() {
   const { sidebarCollapsed, activeView } = useSmartHomeStore();
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [addDeviceTarget, setAddDeviceTarget] = useState<{ roomId: string; roomName: string } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const {
     rooms,
@@ -47,49 +51,57 @@ export default function Home() {
           </div>
           <div className="page-header__time">
             <Clock size={14} />
-            <span>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span>{mounted ? new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Đang tải...'}</span>
           </div>
         </header>
 
-        {activeView === 'overview' && (
-          <DashboardView
-            rooms={rooms}
-            totalSystemPower={totalSystemPower}
-            activeDeviceCount={activeDeviceCount}
-            totalDeviceCount={totalDeviceCount}
-            selectedRoomId={selectedRoomId}
-            setSelectedRoomId={setSelectedRoomId}
-            setShowAddRoom={setShowAddRoom}
-          />
-        )}
+        {mounted ? (
+          <>
+            {activeView === 'overview' && (
+              <DashboardView
+                rooms={rooms}
+                totalSystemPower={totalSystemPower}
+                activeDeviceCount={activeDeviceCount}
+                totalDeviceCount={totalDeviceCount}
+                selectedRoomId={selectedRoomId}
+                setSelectedRoomId={setSelectedRoomId}
+                setShowAddRoom={setShowAddRoom}
+              />
+            )}
 
-        {activeView === 'rooms' && (
-          <RoomsView
-            rooms={rooms}
-            selectedRoomId={selectedRoomId}
-            setSelectedRoomId={setSelectedRoomId}
-            setShowAddRoom={setShowAddRoom}
-            setAddDeviceTarget={setAddDeviceTarget}
-          />
-        )}
+            {activeView === 'rooms' && (
+              <RoomsView
+                rooms={rooms}
+                selectedRoomId={selectedRoomId}
+                setSelectedRoomId={setSelectedRoomId}
+                setShowAddRoom={setShowAddRoom}
+                setAddDeviceTarget={setAddDeviceTarget}
+              />
+            )}
 
-        {activeView === 'devices' && (
-          <DevicesView
-            rooms={rooms}
-            setAddDeviceTarget={setAddDeviceTarget}
-          />
-        )}
+            {activeView === 'devices' && (
+              <DevicesView
+                rooms={rooms}
+                setAddDeviceTarget={setAddDeviceTarget}
+              />
+            )}
 
-        {activeView === 'power' && (
-          <PowerView
-            rooms={rooms}
-            totalSystemPower={totalSystemPower}
-          />
-        )}
+            {activeView === 'power' && (
+              <PowerView
+                rooms={rooms}
+                totalSystemPower={totalSystemPower}
+              />
+            )}
 
-        {activeView === 'logs' && <LogsView />}
-        
-        {activeView === 'oop' && <OOPView />}
+            {activeView === 'logs' && <LogsView />}
+            
+            {activeView === 'oop' && <OOPView />}
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        )}
       </main>
 
       {/* ===== MODALS ===== */}
