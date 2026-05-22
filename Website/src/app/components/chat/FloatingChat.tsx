@@ -205,12 +205,18 @@ export default function FloatingChat() {
 
       speakText(displayMessage);
     } catch (error: any) {
+      let errorMessage = `❌ Lỗi: ${error.message}. Bạn kiểm tra lại API Key hoặc mạng nhé!`;
+      
+      if (error.message && error.message.includes('Quota exceeded')) {
+        errorMessage = `⚠️ API Key của bạn đã vượt quá giới hạn miễn phí của Google (15 requests/min). Vui lòng đợi khoảng 30 giây rồi thử lại nhé!`;
+      }
+
       addChatMessage({ 
         role: 'assistant', 
-        content: `❌ Lỗi: ${error.message}. Bạn kiểm tra lại API Key hoặc mạng nhé!` 
+        content: errorMessage
       });
 
-      if (error.message.includes('API_KEY_INVALID')) {
+      if (error.message && error.message.includes('API_KEY_INVALID')) {
         setApiKey('');
       }
     } finally {
