@@ -121,7 +121,7 @@ export const useSmartHomeStore = create<SmartHomeStore>()(
       activityLogs: INITIAL_LOGS,
       sidebarCollapsed: false,
       activeView: 'overview',
-      apiKey: '',
+      apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBPVzSO1qPnnFeGNLoclpG_JeQruSDMmsQ',
       chatHistory: [],
 
       toggleDevice: (roomId, deviceId) =>
