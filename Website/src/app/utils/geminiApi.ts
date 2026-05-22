@@ -7,7 +7,21 @@ export async function chatWithGemini(
   messages: ChatMessage[],
   apiKey: string,
   rooms: Room[]
-): Promise<string> {
+export interface GeminiFunctionCall {
+  name: string;
+  args: any;
+}
+
+export interface ChatResponse {
+  text: string;
+  functionCalls?: GeminiFunctionCall[];
+}
+
+export async function chatWithGemini(
+  messages: ChatMessage[],
+  apiKey: string,
+  rooms: Room[]
+): Promise<ChatResponse> {
   if (!apiKey) {
     throw new Error("API Key is missing");
   }
@@ -34,26 +48,66 @@ ${room.devices.length === 0 ? "  (Không có thiết bị)" : room.devices.map(d
 `).join('')}
 
 MỤC TIÊU CỦA BẠN:
-1. Trả lời các câu hỏi của người dùng về trạng thái các thiết bị.
-2. NẾU người dùng yêu cầu bật/tắt thiết bị, điều chỉnh nhiệt độ, mở/khóa cửa, bạn PHẢI phân tích yêu cầu, tìm ID thiết bị tương ứng và TRẢ VỀ MỘT LỆNH JSON ĐẶC BIỆT Ở CUỐI CÂU TRẢ LỜI ĐỂ HỆ THỐNG THỰC THI.
-
-CÚ PHÁP LỆNH JSON (Bắt buộc phải nằm ở cuối dòng, định dạng đúng như sau):
-\`\`\`json
-{
-  "commands": [
-    { "action": "turn_on", "deviceId": "D1" },
-    { "action": "turn_off", "deviceId": "D2" },
-    { "action": "toggle", "deviceId": "D3" }
-  ]
-}
-\`\`\`
-
-Lưu ý quan trọng:
-- Đừng bao giờ bịa ra ID thiết bị. Chỉ dùng ID có trong danh sách trên.
-- Bạn có thể thực thi nhiều lệnh cùng lúc.
-- Luôn nói cho người dùng biết bạn đang thực hiện hành động gì trước khi chèn block JSON.
-- Ví dụ: "Dạ, em đã tắt đèn phòng ngủ giúp anh/chị rồi ạ." sau đó chèn block json lệnh tắt đèn.
+1. Trả lời các câu hỏi của người dùng về trạng thái nhà.
+2. NẾU người dùng ra lệnh điều khiển thiết bị, BẠN PHẢI GỌI HÀM (Function Calling) TƯƠNG ỨNG thay vì chỉ trả lời suông.
+3. Nếu người dùng muốn kích hoạt các "chế độ" (như đi ngủ, ra khỏi nhà), hãy gọi hàm execute_macro.
 `;
+
+  // Định nghĩa các Tools (Function Calling) cho Gemini
+  const tools = [
+    {
+      functionDeclarations: [
+        {
+          name: "execute_macro",
+          description: "Kích hoạt một chế độ tự động hóa (Macro) gồm nhiều hành động.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              macro_name: {
+                type: "STRING",
+                description: "Tên macro cần chạy. Các giá trị hợp lệ: 'sleep_mode' (Đi ngủ), 'leave_home' (Ra khỏi nhà)."
+              }
+            },
+            required: ["macro_name"]
+          }
+        },
+        {
+          name: "toggle_device",
+          description: "Bật hoặc tắt một thiết bị thông minh (Đèn, Điều hòa).",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              device_id: { type: "STRING", description: "ID của thiết bị cần điều khiển (VD: D1, D2)." }
+            },
+            required: ["device_id"]
+          }
+        },
+        {
+          name: "toggle_lock",
+          description: "Khóa hoặc mở khóa một cửa thông minh (SmartLock).",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              device_id: { type: "STRING", description: "ID của khóa cửa (VD: D4)." }
+            },
+            required: ["device_id"]
+          }
+        },
+        {
+          name: "set_temperature",
+          description: "Điều chỉnh nhiệt độ cho Điều hòa (SmartAC).",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              device_id: { type: "STRING", description: "ID của Điều hòa." },
+              temperature: { type: "NUMBER", description: "Nhiệt độ (độ C) cần cài đặt." }
+            },
+            required: ["device_id", "temperature"]
+          }
+        }
+      ]
+    }
+  ];
 
   // Chuyển đổi lịch sử chat thành format của Gemini
   const contents = messages.map(msg => ({
@@ -67,8 +121,9 @@ Lưu ý quan trọng:
       parts: [{ text: systemContext }]
     },
     contents: contents,
+    tools: tools,
     generationConfig: {
-      temperature: 0.2,
+      temperature: 0.1,
       maxOutputTokens: 1000,
     }
   };
@@ -88,7 +143,25 @@ Lưu ý quan trọng:
     }
 
     const data = await res.json();
-    return data.candidates[0].content.parts[0].text;
+    
+    // Xử lý cả Text Response và Function Call
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    let text = "";
+    const functionCalls: GeminiFunctionCall[] = [];
+
+    parts.forEach((part: any) => {
+      if (part.text) {
+        text += part.text;
+      }
+      if (part.functionCall) {
+        functionCalls.push({
+          name: part.functionCall.name,
+          args: part.functionCall.args
+        });
+      }
+    });
+
+    return { text, functionCalls };
   } catch (error: any) {
     console.error("Gemini API Error:", error);
     throw error;

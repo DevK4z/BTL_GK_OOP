@@ -2,14 +2,90 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User, KeyRound, Sparkles, Paperclip, Smile } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, KeyRound, Sparkles, Paperclip, Smile, Mic, MicOff, Volume2 } from 'lucide-react';
 import { useSmartHomeStore } from '../../store';
 import { chatWithGemini } from '../../utils/geminiApi';
+import { 
+  CommandFactory, 
+  ToggleDeviceCommand, 
+  ToggleLockCommand, 
+  SetACTemperatureCommand 
+} from '../../models/Command';
+
+// Định nghĩa interface cho SpeechRecognition API (do TypeScript không có sẵn đầy đủ)
+interface ISpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: (event: any) => void;
+  onerror: (event: any) => void;
+  onend: () => void;
+}
+declare global {
+  interface Window {
+    SpeechRecognition: { new(): ISpeechRecognition };
+    webkitSpeechRecognition: { new(): ISpeechRecognition };
+  }
+}
 
 export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  
+  // Khởi tạo SpeechRecognition
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'vi-VN'; // Ngôn ngữ Tiếng Việt
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput((prev) => prev + " " + transcript);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      setInput(''); // Xóa text cũ khi bắt đầu nói mới
+      recognitionRef.current?.start();
+      setIsListening(true);
+    }
+  };
+
+  const speakText = (text: string) => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      // Hủy đang đọc dở
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'vi-VN';
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
   
   // Trạng thái từ Zustand store
   const { 
@@ -37,47 +113,49 @@ export default function FloatingChat() {
     }
   }, [chatHistory, isOpen]);
 
-  // Xử lý lệnh JSON được Gemini trả về
-  const executeCommands = (jsonStr: string) => {
-    try {
-      const data = JSON.parse(jsonStr);
-      if (data && Array.isArray(data.commands)) {
-        data.commands.forEach((cmd: any) => {
-          const { action, deviceId } = cmd;
-          if (!deviceId) return;
+  // Thực thi các lệnh bằng OOP Command Pattern
+  const handleFunctionCalls = (functionCalls: any[]) => {
+    if (!functionCalls || functionCalls.length === 0) return;
 
-          // Tìm roomId
-          const room = rooms.find(r => r.devices.some(d => d.id === deviceId));
-          if (!room) return;
-          
-          const device = room.devices.find(d => d.id === deviceId);
-          if (!device) return;
+    functionCalls.forEach((fc) => {
+      const { name, args } = fc;
+      
+      if (name === 'execute_macro') {
+        const macroName = args.macro_name;
+        if (macroName === 'sleep_mode') {
+          const macro = CommandFactory.createSleepModeMacro();
+          macro.execute();
+        } else if (macroName === 'leave_home') {
+          const macro = CommandFactory.createLeaveHomeMacro();
+          macro.execute();
+        }
+      } 
+      else if (name === 'toggle_device' || name === 'toggle_lock' || name === 'set_temperature') {
+        const deviceId = args.device_id;
+        const room = rooms.find(r => r.devices.some(d => d.id === deviceId));
+        if (!room) return;
+        const device = room.devices.find(d => d.id === deviceId);
+        if (!device) return;
 
-          if (device.type === 'SmartLock') {
-            // Đối với khóa thì toggleLock
-            if (action === 'turn_on' || action === 'turn_off' || action === 'toggle') {
-               // SmartLock dùng hàm toggleLock riêng biệt
-               toggleLock(room.id, deviceId);
-               addLog({
-                  message: `AI đã ${action === 'turn_on' ? 'khóa' : 'mở'} ${device.name}`,
-                  type: 'info',
-                  icon: 'bot'
-               });
-            }
-          } else {
-             // Với đèn hoặc điều hòa
-             toggleDevice(room.id, deviceId);
-             addLog({
-                message: `AI đã bật/tắt ${device.name}`,
-                type: 'info',
-                icon: 'bot'
-             });
-          }
-        });
+        let cmd = null;
+        if (name === 'toggle_device') {
+          cmd = new ToggleDeviceCommand(room.id, deviceId, device.name);
+        } else if (name === 'toggle_lock') {
+          cmd = new ToggleLockCommand(room.id, deviceId, device.name);
+        } else if (name === 'set_temperature') {
+          cmd = new SetACTemperatureCommand(room.id, deviceId, device.name, args.temperature);
+        }
+
+        if (cmd) {
+          cmd.execute();
+          addLog({
+            message: cmd.getDescription(),
+            type: 'info',
+            icon: 'bot'
+          });
+        }
       }
-    } catch (e) {
-      console.error("Lỗi khi parse lệnh từ AI:", e);
-    }
+    });
   };
 
   const handleSend = async (e?: React.FormEvent) => {
@@ -116,20 +194,22 @@ export default function FloatingChat() {
       // Lấy toàn bộ lịch sử (bao gồm tin nhắn user vừa thêm)
       const currentHistory = useSmartHomeStore.getState().chatHistory;
       
-      const responseText = await chatWithGemini(currentHistory, apiKey, rooms);
+      const response = await chatWithGemini(currentHistory, apiKey, rooms);
       
-      // Kiểm tra và tách chuỗi JSON lệnh (nếu có)
-      let displayMessage = responseText;
-      const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/);
+      let displayMessage = response.text;
       
-      if (jsonMatch) {
-        // Có lệnh JSON -> Thực thi lệnh
-        executeCommands(jsonMatch[1]);
-        // Cắt bỏ phần JSON khỏi nội dung hiển thị cho người dùng
-        displayMessage = responseText.replace(/```json\n[\s\S]*?\n```/, '').trim();
+      // Nếu có gọi hàm, thực thi
+      if (response.functionCalls && response.functionCalls.length > 0) {
+        handleFunctionCalls(response.functionCalls);
+        if (!displayMessage) {
+           displayMessage = "Đã thực hiện xong yêu cầu của bạn!";
+        }
       }
 
       addChatMessage({ role: 'assistant', content: displayMessage });
+      
+      // Đọc phản hồi bằng giọng nói (nếu vừa thu âm hoặc mặc định bật TTS)
+      speakText(displayMessage);
     } catch (error: any) {
       addChatMessage({ 
         role: 'assistant', 
@@ -257,13 +337,23 @@ export default function FloatingChat() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={!apiKey ? "Nhập API Key bắt đầu bằng AIza..." : "Hỏi AI về hệ thống..."}
+              placeholder={!apiKey ? "Nhập API Key bắt đầu bằng AIza..." : (isListening ? "Đang nghe..." : "Hỏi AI về hệ thống...")}
               className="flex-1 bg-transparent border-none outline-none text-[14px] text-white placeholder:text-gray-500 min-w-0"
               disabled={isTyping}
             />
             <div className="flex items-center gap-1 text-gray-500">
-               <button type="button" className="p-1.5 hover:bg-white/5 rounded-lg hover:text-blue-400 transition-colors">
-                  <Smile size={18} />
+               {isSpeaking && (
+                 <button type="button" onClick={() => window.speechSynthesis.cancel()} className="p-1.5 text-green-400 hover:bg-white/5 rounded-lg transition-colors" title="Dừng đọc">
+                    <Volume2 size={18} className="animate-pulse" />
+                 </button>
+               )}
+               <button 
+                 type="button" 
+                 onClick={toggleListening}
+                 className={`p-1.5 rounded-lg transition-colors ${isListening ? 'bg-rose-500/20 text-rose-400' : 'hover:bg-white/5 hover:text-blue-400'}`}
+                 title={isListening ? "Dừng ghi âm" : "Ghi âm giọng nói"}
+               >
+                  {isListening ? <MicOff size={18} /> : <Mic size={18} />}
                </button>
                <button 
                  type="submit" 
