@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User, KeyRound, Sparkles, Paperclip, Smile, Mic, MicOff, Volume2 } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, KeyRound, Sparkles, Paperclip, Smile, Mic, MicOff, Volume2, Trash2 } from 'lucide-react';
 import { useSmartHomeStore } from '../../store';
 import { chatWithGemini } from '../../utils/geminiApi';
 import { 
@@ -91,6 +91,7 @@ export default function FloatingChat() {
     setApiKey, 
     chatHistory, 
     addChatMessage, 
+    clearChatHistory,
     rooms, 
     toggleDevice,
     toggleLock,
@@ -257,9 +258,23 @@ export default function FloatingChat() {
               </p>
             </div>
           </div>
-          <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 p-1.5 rounded-lg transition-colors">
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                if (window.confirm("Bạn có chắc muốn làm mới AI (xóa lịch sử chat và API Key)?")) {
+                  clearChatHistory();
+                  setApiKey('');
+                }
+              }} 
+              className="text-gray-400 hover:text-rose-400 bg-white/5 hover:bg-white/10 p-1.5 rounded-lg transition-colors"
+              title="Làm mới SmartHub AI"
+            >
+              <Trash2 size={16} />
+            </button>
+            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 p-1.5 rounded-lg transition-colors" title="Đóng">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {!apiKey && chatHistory.length === 0 && (
