@@ -103,10 +103,3 @@ Mở trình duyệt và truy cập: `http://localhost:3000`
 * GitHub: [@DevK4z](https://www.google.com/search?q=https://github.com/DevK4z)
 
 *Báo cáo được thực hiện nhằm mục đích hoàn thành Bài tập lớn Giữa kỳ. Cảm ơn giảng viên và các bạn đã dành thời gian đánh giá dự án này!*
-
-```
-
-### Lưu ý nhỏ:
-Bạn có thể điều chỉnh lại đường dẫn file `main.cpp` hoặc `main.py` ở mục Hướng dẫn cài đặt cho khớp đúng với tên file thực tế bạn lưu trong thư mục dự án GitHub nhé!
-
-```
