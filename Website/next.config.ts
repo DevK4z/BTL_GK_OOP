@@ -4,7 +4,7 @@ const isProd = process.env.NODE_ENV === 'production';
 
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: isProd ? "/TEST" : "",
+  basePath: isProd ? "/BTL_GK_OOP" : "",
   images: {
     unoptimized: true,
   },
