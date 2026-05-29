@@ -19,7 +19,15 @@ import dynamic from 'next/dynamic';
 // Dynamic import SmartHome3DView — ssr: false vì React Three Fiber cần browser API (WebGL)
 const SmartHome3DView = dynamic(
   () => import('./components/views/SmartHome3DView'),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col items-center justify-center w-full min-h-[600px] h-[calc(100vh-140px)] bg-[#0b1120] border-2 border-[#1e293b] rounded-lg">
+        <div className="w-10 h-10 border-4 border-[#0ea5e9] border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-[#38bdf8] font-mono text-[13px] tracking-widest uppercase">Initializing WebGL Engine...</p>
+      </div>
+    )
+  }
 );
 
 export default function Home() {

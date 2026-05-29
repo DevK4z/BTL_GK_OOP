@@ -389,6 +389,7 @@ export default function SmartHome3DView({ rooms, onToggleDevice }: SmartHome3DVi
 
   return (
     <div
+      className="touch-none" // Ngăn trình duyệt xử lý thao tác vuốt trên mobile (kẹt cuộn trang)
       style={{
         width: '100%',
         height: 'calc(100vh - 140px)',

@@ -1,12 +1,9 @@
 import type { NextConfig } from "next";
 
-const isProd = process.env.NODE_ENV === 'production';
-
 const nextConfig: NextConfig = {
-  output: "export",
-  basePath: isProd ? "/BTL_GK_OOP" : "",
+  // Cấu hình tối ưu chuẩn của Vercel (bỏ export và basePath)
   images: {
-    unoptimized: true,
+    unoptimized: false, // Bật tối ưu hóa hình ảnh chuẩn Next.js
   },
   eslint: {
     ignoreDuringBuilds: true,
