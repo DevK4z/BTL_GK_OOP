@@ -10,6 +10,7 @@ import DevicesView from './components/views/DevicesView';
 import PowerView from './components/views/PowerView';
 import LogsView from './components/views/LogsView';
 import OOPView from './components/views/OOPView';
+import FloatingChat from './components/chat/FloatingChat';
 import { useSmartHomeStore } from './store';
 import { useSmartHome } from './hooks/useSmartHome';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -146,6 +147,9 @@ export default function Home() {
           roomName={addDeviceTarget.roomName}
         />
       )}
+
+      {/* Áp dụng SmartHub AI cho tất cả các trang */}
+      {mounted && <FloatingChat />}
     </div>
   );
 }
