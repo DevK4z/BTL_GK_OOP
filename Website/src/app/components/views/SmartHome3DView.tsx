@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, PerspectiveCamera, Environment, RoundedBox, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
@@ -422,37 +422,43 @@ export default function SmartHome3DView({ rooms, onToggleDevice }: SmartHome3DVi
       <Canvas shadows camera={{ position: [20, 20, 30], fov: 40 }}>
         <color attach="background" args={['#0f172a']} />
         
-        {/* Lighing & Environment */}
-        <ambientLight intensity={0.4} />
-        <directionalLight 
-          position={[10, 20, 10]} 
-          intensity={1.5} 
-          castShadow 
-          shadow-mapSize-width={2048} 
-          shadow-mapSize-height={2048} 
-          shadow-bias={-0.0001}
-        />
-        <Environment preset="city" />
-
-        <OrbitControls
-          enableRotate={true}
-          maxPolarAngle={Math.PI / 2.1}
-          minPolarAngle={0}
-          enableDamping
-          dampingFactor={0.05}
-        />
-
-        {rooms.map((room, idx) => (
-          <RealisticRoomGroup
-            key={room.id}
-            room={room}
-            roomPosition={roomPositions[idx]}
-            onToggle={onToggleDevice}
+        <Suspense fallback={
+          <Html center>
+            <div style={{ color: '#38bdf8', fontFamily: 'monospace' }}>Đang tải mô hình...</div>
+          </Html>
+        }>
+          {/* Lighing & Environment */}
+          <ambientLight intensity={0.4} />
+          <directionalLight 
+            position={[10, 20, 10]} 
+            intensity={1.5} 
+            castShadow 
+            shadow-mapSize-width={2048} 
+            shadow-mapSize-height={2048} 
+            shadow-bias={-0.0001}
           />
-        ))}
+          <Environment preset="city" />
 
-        {/* Tùy chọn ContactShadows để có bóng mềm siêu thực tế trên mặt đất */}
-        <ContactShadows position={[0, -0.08, 0]} opacity={0.4} scale={100} blur={2} far={10} />
+          <OrbitControls
+            enableRotate={true}
+            maxPolarAngle={Math.PI / 2.1}
+            minPolarAngle={0}
+            enableDamping
+            dampingFactor={0.05}
+          />
+
+          {rooms.map((room, idx) => (
+            <RealisticRoomGroup
+              key={room.id}
+              room={room}
+              roomPosition={roomPositions[idx]}
+              onToggle={onToggleDevice}
+            />
+          ))}
+
+          {/* Tùy chọn ContactShadows để có bóng mềm siêu thực tế trên mặt đất */}
+          <ContactShadows position={[0, -0.08, 0]} opacity={0.4} scale={100} blur={2} far={10} />
+        </Suspense>
       </Canvas>
     </div>
   );
