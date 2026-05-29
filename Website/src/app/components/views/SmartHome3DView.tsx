@@ -1,20 +1,16 @@
 /**
  * ============================================================================
- * SmartHome3DView.tsx — Bản vẽ kỹ thuật (Technical Blueprint) - Cải tiến Visuals
+ * SmartHome3DView.tsx — Realistic 3D Smart Home Environment
  * ============================================================================
  */
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Html, OrthographicCamera, Edges } from '@react-three/drei';
+import { OrbitControls, Html, PerspectiveCamera, Environment, RoundedBox, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 import type { DeviceData, RoomData } from '../../types';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Props & Cấu hình Theme Bản Vẽ Kỹ Thuật (Blueprint)
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface SmartHome3DViewProps {
   rooms: RoomData[];
@@ -28,28 +24,11 @@ interface Device3DProps {
   onToggle: (roomId: string, deviceId: string) => void;
 }
 
-// Bảng màu hệ thống dạng Bản vẽ Blueprint (Dark mode viền neon sáng)
-const BP = {
-  BG: '#0b1120',             // Nền xanh đen sâu
-  GRID_MAJ: '#1e293b',       // Lưới chính (Slate 800)
-  GRID_MIN: '#0f172a',       // Lưới phụ (Slate 900)
-  ROOM_LINE: '#64748b',      // Khung phòng
-  MESH_BASE: '#172554',      // Màu khối base (Đậm hơn sàn để nổi khối)
-  DEVICE_OFF: '#475569',     // Thiết bị tắt (Xám)
-  DEVICE_ON: '#0ea5e9',      // Thiết bị bật (Cyan/Blue kỹ thuật)
-  ZONE_LIGHT: '#fde047',     // Vùng chiếu sáng (Vàng chanh)
-  ZONE_AC: '#7dd3fc',        // Vùng khí lạnh (Xanh nhạt)
-  LABEL_BG: 'rgba(15, 23, 42, 0.75)', // Nền nhãn trong suốt nhẹ
-  LABEL_TEXT: '#e0f2fe',     // Chữ xanh nhạt sáng
-  LABEL_BORDER: '#0ea5e9',   // Viền xanh
-  LABEL_ACCENT: '#38bdf8',   // Điểm nhấn chữ
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
-// 1) HTML Label Component — Callout Overlay
+// 1) UI Label Component (Sleek Modern UI)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function BlueprintLabel({
+function ModernLabel({
   position,
   title,
   lines,
@@ -65,62 +44,44 @@ function BlueprintLabel({
       <div
         onClick={onClick}
         style={{
-          position: 'relative',
-          background: BP.LABEL_BG,
-          backdropFilter: 'blur(4px)',
-          border: `1px solid ${BP.LABEL_BORDER}`,
-          padding: '6px 10px',
-          color: BP.LABEL_TEXT,
-          fontFamily: '"SF Mono", "Courier New", monospace', // Font kỹ thuật
-          fontSize: '11px',
+          background: 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255,255,255,0.4)',
+          borderRadius: '12px',
+          padding: '8px 12px',
+          color: '#1e293b',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          fontSize: '12px',
           whiteSpace: 'nowrap',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
           cursor: onClick ? 'pointer' : 'default',
           userSelect: 'none',
           pointerEvents: onClick ? 'auto' : 'none',
-          // Đẩy label lệch lên trên và sang phải để tránh đè khối 3D
-          transform: 'translate3d(30px, -40px, 0)', 
+          transform: 'translate3d(30px, -50px, 0)',
         }}
       >
-        {/* Đường kẻ chỉ nối từ hộp label xuống tâm object */}
         <div style={{
           position: 'absolute',
-          bottom: '-21px',
+          bottom: '-25px',
           left: '-31px',
           width: '30px',
-          height: '20px',
-          borderBottom: `1px solid ${BP.LABEL_BORDER}`,
-          borderLeft: `1px solid ${BP.LABEL_BORDER}`,
-          opacity: 0.6,
+          height: '24px',
+          borderBottom: '2px solid rgba(255, 255, 255, 0.6)',
+          borderLeft: '2px solid rgba(255, 255, 255, 0.6)',
+          borderRadius: '0 0 0 8px',
           pointerEvents: 'none'
         }} />
 
-        <strong
-          style={{
-            display: 'block',
-            borderBottom: `1px solid ${BP.LABEL_BORDER}`,
-            paddingBottom: '4px',
-            marginBottom: '4px',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            color: BP.LABEL_ACCENT,
-          }}
-        >
+        <strong style={{ display: 'block', borderBottom: '1px solid rgba(0,0,0,0.1)', paddingBottom: '4px', marginBottom: '4px', color: '#0f172a' }}>
           {title}
         </strong>
         {lines.map((line, idx) => {
-          // Highlight thông số quan trọng (ON, MỞ, số)
           const highlightedLine = line
-            .replace(/(ON|MỞ|Online)/g, `<span style="color: #4ade80; font-weight: bold;">$1</span>`)
-            .replace(/(OFF|KHÓA|Offline)/g, `<span style="color: #f87171; font-weight: bold;">$1</span>`)
-            .replace(/(\d+[%W]?)/g, `<span style="color: #fde047;">$1</span>`);
+            .replace(/(ON|MỞ|Online)/g, `<span style="color: #10b981; font-weight: bold;">$1</span>`)
+            .replace(/(OFF|KHÓA|Offline)/g, `<span style="color: #ef4444; font-weight: bold;">$1</span>`);
 
           return (
-            <div 
-              key={idx} 
-              style={{ lineHeight: '1.5', opacity: 0.9 }}
-              dangerouslySetInnerHTML={{ __html: highlightedLine }}
-            />
+            <div key={idx} style={{ lineHeight: '1.6', fontSize: '11px', color: '#475569' }} dangerouslySetInnerHTML={{ __html: highlightedLine }} />
           );
         })}
       </div>
@@ -129,39 +90,60 @@ function BlueprintLabel({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2) Thiết Bị 3D — Tối Giản & Wireframe
+// 2) Realistic Devices
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SmartLightBlueprint({ device, roomId, position, onToggle }: Device3DProps) {
+function SmartLightRealistic({ device, roomId, position, onToggle }: Device3DProps) {
   const isOn = device.status;
   const brightness = device.brightness ?? 0;
-  const color = isOn ? BP.DEVICE_ON : BP.DEVICE_OFF;
+  
+  // Convert color name to hex
+  let bulbColor = '#ffffff';
+  if (device.color === 'Warm White') bulbColor = '#ffeedd';
+  if (device.color === 'Daylight') bulbColor = '#e0f7fa';
+  if (device.color === 'Cool White') bulbColor = '#f0f8ff';
+  if (device.color === 'Sunset') bulbColor = '#ffccaa';
 
   return (
     <group position={position}>
-      <mesh
-        position={[0, 1.5, 0]}
+      {/* Light Base (Metal) */}
+      <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.3, 0.4, 0.8, 32]} />
+        <meshStandardMaterial color="#333" metalness={0.8} roughness={0.2} />
+      </mesh>
+
+      {/* Glass Bulb */}
+      <mesh 
+        position={[0, 1.2, 0]} 
+        castShadow 
         onClick={(e) => { e.stopPropagation(); onToggle(roomId, device.id); }}
         onPointerOver={() => (document.body.style.cursor = 'pointer')}
         onPointerOut={() => (document.body.style.cursor = 'auto')}
       >
-        <sphereGeometry args={[0.4, 12, 12]} />
-        <meshBasicMaterial color={BP.MESH_BASE} />
-        <Edges color={color} threshold={15} />
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshPhysicalMaterial 
+          color={isOn ? bulbColor : '#ffffff'} 
+          transmission={1} 
+          thickness={0.5} 
+          roughness={isOn ? 0.1 : 0.3} 
+          ior={1.5} 
+        />
       </mesh>
 
+      {/* Glowing Inner Core */}
       {isOn && (
-        <mesh position={[0, 0.75, 0]}>
-          <coneGeometry args={[1.5, 1.5, 16]} />
-          <meshBasicMaterial color={BP.ZONE_LIGHT} wireframe transparent opacity={0.25} />
+        <mesh position={[0, 1.2, 0]}>
+          <sphereGeometry args={[0.15, 16, 16]} />
+          <meshBasicMaterial color={bulbColor} />
+          <pointLight color={bulbColor} intensity={brightness / 50} distance={10} castShadow />
         </mesh>
       )}
 
-      <BlueprintLabel
-        position={[0, 1.5, 0]}
-        title={`[ĐÈN] ${device.name}`}
+      <ModernLabel
+        position={[0, 1.8, 0]}
+        title={`💡 ${device.name}`}
         lines={[
-          `Mức sáng : ${brightness}%`,
+          `Độ sáng: ${brightness}%`,
           `Trạng thái: ${isOn ? 'ON' : 'OFF'}`,
         ]}
         onClick={(e) => { e.stopPropagation(); onToggle(roomId, device.id); }}
@@ -170,38 +152,54 @@ function SmartLightBlueprint({ device, roomId, position, onToggle }: Device3DPro
   );
 }
 
-function SmartACBlueprint({ device, roomId, position, onToggle }: Device3DProps) {
+function SmartACRealistic({ device, roomId, position, onToggle }: Device3DProps) {
   const isOn = device.status;
   const temp = device.temperature ?? 25;
   const powerW = isOn ? (device.basePower * (1.0 + Math.abs(temp - 25) * 0.05)).toFixed(0) : '0';
-  const color = isOn ? BP.DEVICE_ON : BP.DEVICE_OFF;
 
   return (
     <group position={position}>
-      <mesh
-        position={[0, 1.5, 0]}
+      {/* AC Main Body (Glossy White Plastic) */}
+      <RoundedBox 
+        args={[2.2, 0.8, 0.6]} 
+        radius={0.1} 
+        smoothness={4} 
+        position={[0, 1.2, 0]} 
+        castShadow 
+        receiveShadow
         onClick={(e) => { e.stopPropagation(); onToggle(roomId, device.id); }}
         onPointerOver={() => (document.body.style.cursor = 'pointer')}
         onPointerOut={() => (document.body.style.cursor = 'auto')}
       >
-        <boxGeometry args={[1.4, 0.5, 0.6]} />
-        <meshBasicMaterial color={BP.MESH_BASE} />
-        <Edges color={color} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.1} metalness={0.1} />
+      </RoundedBox>
+
+      {/* Flap (Darker grey) */}
+      <mesh position={[0, 0.9, 0.2]} rotation={[isOn ? -0.2 : 0, 0, 0]}>
+        <boxGeometry args={[2.0, 0.1, 0.2]} />
+        <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
       </mesh>
 
+      {/* LED Display */}
+      <mesh position={[0.6, 1.2, 0.31]}>
+        <planeGeometry args={[0.4, 0.2]} />
+        <meshBasicMaterial color="#000000" />
+      </mesh>
+      
       {isOn && (
-        <mesh position={[0, 0.5, 0.4]}>
-          <boxGeometry args={[1.8, 1.5, 1.2]} />
-          <meshBasicMaterial color={BP.ZONE_AC} wireframe transparent opacity={0.25} />
-        </mesh>
+        <Html position={[0.6, 1.2, 0.32]} transform distanceFactor={5}>
+          <div style={{ color: '#10b981', fontFamily: 'monospace', fontWeight: 'bold', fontSize: '24px' }}>
+            {temp}°
+          </div>
+        </Html>
       )}
 
-      <BlueprintLabel
-        position={[0, 1.5, 0]}
-        title={`[ĐIỀU HÒA] ${device.name}`}
+      <ModernLabel
+        position={[0, 1.8, 0]}
+        title={`❄️ ${device.name}`}
         lines={[
-          `Công suất: ${powerW}W`,
           `Nhiệt độ : ${temp}°C`,
+          `Công suất: ${powerW}W`,
         ]}
         onClick={(e) => { e.stopPropagation(); onToggle(roomId, device.id); }}
       />
@@ -209,11 +207,10 @@ function SmartACBlueprint({ device, roomId, position, onToggle }: Device3DProps)
   );
 }
 
-function SmartLockBlueprint({ device, roomId, position, onToggle }: Device3DProps) {
-  const doorRef = React.useRef<THREE.Group>(null);
+function SmartLockRealistic({ device, roomId, position, onToggle }: Device3DProps) {
+  const doorRef = useRef<THREE.Group>(null);
   const isOn = device.status;
   const isLocked = device.isLocked ?? true;
-  const color = isLocked ? BP.DEVICE_OFF : BP.DEVICE_ON;
 
   useFrame(() => {
     if (doorRef.current) {
@@ -228,29 +225,48 @@ function SmartLockBlueprint({ device, roomId, position, onToggle }: Device3DProp
 
   return (
     <group position={position}>
-      <mesh position={[0, 0.75, 0]}>
-        <boxGeometry args={[1.4, 1.5, 0.1]} />
-        <meshBasicMaterial color={BP.MESH_BASE} />
-        <Edges color={BP.DEVICE_OFF} />
+      {/* Door Frame */}
+      <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
+        <boxGeometry args={[1.8, 3, 0.15]} />
+        <meshStandardMaterial color="#334155" roughness={0.7} metalness={0.3} />
       </mesh>
 
-      <group ref={doorRef} position={[-0.7, 0, 0]}>
-        <mesh
-          position={[0.7, 0.75, 0]}
+      {/* Door Panel */}
+      <group ref={doorRef} position={[-0.8, 0, 0]}>
+        <mesh 
+          position={[0.8, 1.5, 0]} 
+          castShadow 
+          receiveShadow
           onClick={(e) => { e.stopPropagation(); onToggle(roomId, device.id); }}
           onPointerOver={() => (document.body.style.cursor = 'pointer')}
           onPointerOut={() => (document.body.style.cursor = 'auto')}
         >
-          <boxGeometry args={[1.4, 1.5, 0.05]} />
-          <meshBasicMaterial color={BP.MESH_BASE} />
-          <Edges color={color} />
-          <meshBasicMaterial wireframe color={color} transparent opacity={0.2} />
+          <boxGeometry args={[1.6, 2.9, 0.1]} />
+          <meshStandardMaterial color="#94a3b8" roughness={0.3} metalness={0.2} />
+        </mesh>
+
+        {/* Smart Lock Keypad */}
+        <mesh position={[1.4, 1.5, 0.06]} castShadow>
+          <boxGeometry args={[0.2, 0.4, 0.05]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.1} metalness={0.8} />
+        </mesh>
+
+        {/* Lock LED Indicator */}
+        <mesh position={[1.4, 1.6, 0.09]}>
+          <circleGeometry args={[0.03, 16]} />
+          <meshBasicMaterial color={isLocked ? '#ef4444' : '#10b981'} />
+        </mesh>
+
+        {/* Handle */}
+        <mesh position={[1.4, 1.4, 0.1]} castShadow>
+          <cylinderGeometry args={[0.02, 0.02, 0.2, 16]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.1} />
         </mesh>
       </group>
 
-      <BlueprintLabel
-        position={[0, 1.5, 0]}
-        title={`[KHÓA] ${device.name}`}
+      <ModernLabel
+        position={[0, 3.2, 0]}
+        title={`🔒 ${device.name}`}
         lines={[
           `Cửa : ${isLocked ? 'KHÓA' : 'MỞ'}`,
           `Mạng: ${isOn ? 'Online' : 'Offline'}`,
@@ -262,10 +278,10 @@ function SmartLockBlueprint({ device, roomId, position, onToggle }: Device3DProp
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Floor Plate — Sàn Phòng Blueprint
+// Floor Plate — Realistic Room Floor
 // ─────────────────────────────────────────────────────────────────────────────
 
-function BlueprintRoomPlate({
+function RealisticRoomPlate({
   position,
   size,
   roomName,
@@ -276,41 +292,44 @@ function BlueprintRoomPlate({
 }) {
   return (
     <group position={position}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+      {/* Floor Base */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
         <planeGeometry args={size} />
-        <meshBasicMaterial color={BP.BG} />
-        <Edges color={BP.ROOM_LINE} />
+        <meshStandardMaterial color="#e2e8f0" roughness={0.8} metalness={0.1} />
       </mesh>
 
-      {/* Crosshairs ở các góc */}
-      {[
-        [-size[0] / 2 + 0.3, -size[1] / 2 + 0.3],
-        [size[0] / 2 - 0.3, -size[1] / 2 + 0.3],
-        [-size[0] / 2 + 0.3, size[1] / 2 - 0.3],
-        [size[0] / 2 - 0.3, size[1] / 2 - 0.3],
-      ].map(([x, z], i) => (
-        <mesh key={i} position={[x, 0.02, z]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[0.3, 0.3]} />
-          <meshBasicMaterial color={BP.ROOM_LINE} wireframe />
-        </mesh>
-      ))}
+      {/* Wall Borders (Low walls to signify room edges) */}
+      <mesh position={[0, 0.1, -size[1] / 2]} receiveShadow castShadow>
+        <boxGeometry args={[size[0], 0.3, 0.1]} />
+        <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 0.1, size[1] / 2]} receiveShadow castShadow>
+        <boxGeometry args={[size[0], 0.3, 0.1]} />
+        <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
+      </mesh>
+      <mesh position={[-size[0] / 2, 0.1, 0]} receiveShadow castShadow>
+        <boxGeometry args={[0.1, 0.3, size[1]]} />
+        <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
+      </mesh>
+      <mesh position={[size[0] / 2, 0.1, 0]} receiveShadow castShadow>
+        <boxGeometry args={[0.1, 0.3, size[1]]} />
+        <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
+      </mesh>
 
-      {/* Nhãn tên phòng */}
-      <Html position={[-size[0] / 2 + 0.5, 0, size[1] / 2 - 0.5]} zIndexRange={[50, 0]}>
-        <div
-          style={{
-            background: BP.ROOM_LINE,
-            color: '#ffffff',
-            padding: '3px 8px',
-            fontFamily: '"SF Mono", "Courier New", monospace',
-            fontWeight: 'bold',
-            fontSize: '12px',
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap', // Ngăn ngắt dòng
-            userSelect: 'none',
-          }}
-        >
+      {/* Room Name Tag */}
+      <Html position={[-size[0] / 2 + 0.5, 0.3, size[1] / 2 - 0.5]} zIndexRange={[50, 0]}>
+        <div style={{
+          background: '#334155',
+          color: '#ffffff',
+          padding: '4px 10px',
+          borderRadius: '12px',
+          fontFamily: 'system-ui, sans-serif',
+          fontWeight: 'bold',
+          fontSize: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          whiteSpace: 'nowrap',
+          userSelect: 'none',
+        }}>
           {roomName}
         </div>
       </Html>
@@ -319,10 +338,10 @@ function BlueprintRoomPlate({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Controller & Logic Bố Trí
+// Controller & Grouping
 // ─────────────────────────────────────────────────────────────────────────────
 
-function RoomBlueprintGroup({
+function RealisticRoomGroup({
   room,
   roomPosition,
   onToggle,
@@ -334,13 +353,13 @@ function RoomBlueprintGroup({
   const count = room.devices.length;
   const cols = count > 0 ? Math.min(count, 3) : 1;
   const rows = count > 0 ? Math.ceil(count / cols) : 1;
-  const spacing = 5.5; // Tăng khoảng cách giữa các thiết bị để nhãn không đè nhau
-  const plateW = Math.max(cols * spacing + 1.0, 7.0);
-  const plateH = Math.max(rows * spacing + 1.0, 7.0);
+  const spacing = 4.5;
+  const plateW = Math.max(cols * spacing + 1.0, 6.0);
+  const plateH = Math.max(rows * spacing + 1.0, 6.0);
 
   return (
     <group position={roomPosition}>
-      <BlueprintRoomPlate position={[0, 0, 0]} size={[plateW, plateH]} roomName={room.name} />
+      <RealisticRoomPlate position={[0, 0, 0]} size={[plateW, plateH]} roomName={room.name} />
 
       {room.devices.map((device, idx) => {
         const col = idx % cols;
@@ -349,16 +368,15 @@ function RoomBlueprintGroup({
         const oz = ((rows - 1) * spacing) / 2;
         const x = col * spacing - ox;
         const z = row * spacing - oz;
-
         const pos: [number, number, number] = [x, 0, z];
 
         switch (device.type) {
           case 'SmartLight':
-            return <SmartLightBlueprint key={device.id} device={device} roomId={room.id} position={pos} onToggle={onToggle} />;
+            return <SmartLightRealistic key={device.id} device={device} roomId={room.id} position={pos} onToggle={onToggle} />;
           case 'SmartAC':
-            return <SmartACBlueprint key={device.id} device={device} roomId={room.id} position={pos} onToggle={onToggle} />;
+            return <SmartACRealistic key={device.id} device={device} roomId={room.id} position={pos} onToggle={onToggle} />;
           case 'SmartLock':
-            return <SmartLockBlueprint key={device.id} device={device} roomId={room.id} position={pos} onToggle={onToggle} />;
+            return <SmartLockRealistic key={device.id} device={device} roomId={room.id} position={pos} onToggle={onToggle} />;
           default:
             return null;
         }
@@ -374,8 +392,8 @@ function RoomBlueprintGroup({
 export default function SmartHome3DView({ rooms, onToggleDevice }: SmartHome3DViewProps) {
   const roomPositions = useMemo(() => {
     const COLS = 2;
-    const SPACING_X = 18; // Tăng khoảng cách các phòng
-    const SPACING_Z = 16;
+    const SPACING_X = 14; 
+    const SPACING_Z = 12;
     return rooms.map((_, i): [number, number, number] => {
       const col = i % COLS;
       const row = Math.floor(i / COLS);
@@ -389,63 +407,52 @@ export default function SmartHome3DView({ rooms, onToggleDevice }: SmartHome3DVi
 
   return (
     <div
-      className="touch-none" // Ngăn trình duyệt xử lý thao tác vuốt trên mobile (kẹt cuộn trang)
+      className="touch-none"
       style={{
         width: '100%',
         height: 'calc(100vh - 140px)',
         minHeight: '600px',
-        background: BP.BG,
+        background: '#0f172a',
         borderRadius: '8px',
         overflow: 'hidden',
-        border: `2px solid ${BP.GRID_MAJ}`,
+        border: `2px solid #1e293b`,
         position: 'relative',
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          top: 16,
-          left: 16,
-          zIndex: 10,
-          color: BP.LABEL_ACCENT,
-          fontFamily: '"SF Mono", "Courier New", monospace',
-          fontSize: '13px',
-          pointerEvents: 'none',
-        }}
-      >
-        <div><strong>BẢN VẼ KỸ THUẬT:</strong> SMART HOME HUB IoT</div>
-        <div style={{ color: BP.DEVICE_OFF }}>CHẾ ĐỘ: ISOMETRIC ORTHOGRAPHIC</div>
-      </div>
-
-      <Canvas>
-        <color attach="background" args={[BP.BG]} />
-
-        <OrthographicCamera
-          makeDefault
-          position={[25, 25, 25]} 
-          zoom={25} // Thu nhỏ lại một chút để bao quát tốt hơn
-          near={-100}
-          far={100}
+      <Canvas shadows camera={{ position: [20, 20, 30], fov: 40 }}>
+        <color attach="background" args={['#0f172a']} />
+        
+        {/* Lighing & Environment */}
+        <ambientLight intensity={0.4} />
+        <directionalLight 
+          position={[10, 20, 10]} 
+          intensity={1.5} 
+          castShadow 
+          shadow-mapSize-width={2048} 
+          shadow-mapSize-height={2048} 
+          shadow-bias={-0.0001}
         />
+        <Environment preset="city" />
 
         <OrbitControls
           enableRotate={true}
-          maxPolarAngle={Math.PI / 2.2}
+          maxPolarAngle={Math.PI / 2.1}
           minPolarAngle={0}
           enableDamping
           dampingFactor={0.05}
         />
 
-        <gridHelper args={[150, 150, BP.GRID_MAJ, BP.GRID_MIN]} position={[0, -0.01, 0]} />
-
         {rooms.map((room, idx) => (
-          <RoomBlueprintGroup
+          <RealisticRoomGroup
             key={room.id}
             room={room}
             roomPosition={roomPositions[idx]}
             onToggle={onToggleDevice}
           />
         ))}
+
+        {/* Tùy chọn ContactShadows để có bóng mềm siêu thực tế trên mặt đất */}
+        <ContactShadows position={[0, -0.08, 0]} opacity={0.4} scale={100} blur={2} far={10} />
       </Canvas>
     </div>
   );
