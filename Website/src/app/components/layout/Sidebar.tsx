@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Zap,
   Code2,
+  Box,
 } from 'lucide-react';
 import { useSmartHomeStore } from '../../store';
 
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { id: 'power', label: 'Điện Năng', icon: BarChart3 },
   { id: 'logs', label: 'Nhật Ký', icon: ScrollText },
   { id: 'oop', label: 'OOP Demo', icon: Code2 },
+  { id: '3d-twin', label: '3D Twin', icon: Box },
 ];
 
 export default function Sidebar() {
