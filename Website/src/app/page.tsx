@@ -12,7 +12,14 @@ import LogsView from './components/views/LogsView';
 import OOPView from './components/views/OOPView';
 import { useSmartHomeStore } from './store';
 import { useSmartHome } from './hooks/useSmartHome';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+
+// Dynamic import SmartHome3DView — ssr: false vì React Three Fiber cần browser API (WebGL)
+const SmartHome3DView = dynamic(
+  () => import('./components/views/SmartHome3DView'),
+  { ssr: false }
+);
 
 export default function Home() {
   const { sidebarCollapsed, activeView } = useSmartHomeStore();
@@ -30,6 +37,7 @@ export default function Home() {
     totalSystemPower,
     activeDeviceCount,
     totalDeviceCount,
+    toggleDevice,
   } = useSmartHome();
 
   return (
@@ -47,6 +55,7 @@ export default function Home() {
               {activeView === 'power' && 'Phân Tích Điện Năng'}
               {activeView === 'logs' && 'Nhật Ký Hệ Thống'}
               {activeView === 'oop' && 'OOP Architecture'}
+              {activeView === '3d' && 'Mô Hình 3D'}
             </h1>
             <p className="page-header__subtitle">Smart Home Hub • BTL Giữa Kỳ OOP</p>
           </div>
@@ -97,6 +106,15 @@ export default function Home() {
             {activeView === 'logs' && <LogsView />}
 
             {activeView === 'oop' && <OOPView />}
+
+            {activeView === '3d' && (
+              <SmartHome3DView
+                rooms={rooms}
+                onToggleDevice={(roomId: string, deviceId: string) => {
+                  toggleDevice(roomId, deviceId);
+                }}
+              />
+            )}
           </>
         ) : (
           <div className="flex items-center justify-center h-64">
