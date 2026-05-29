@@ -7,6 +7,7 @@ export * from './SmartLight';
 export * from './SmartAC';
 export * from './SmartLock';
 export * from './DeviceFactory';
+export * from './Command';
 
 export function getDevicePower(deviceData: DeviceData): number {
   const device = DeviceFactory.fromJSON(deviceData);

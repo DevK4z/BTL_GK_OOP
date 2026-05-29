@@ -1,151 +1,101 @@
+/**
+ * ============================================================================
+ * Command.ts — OOP Command Design Pattern
+ * ============================================================================
+ * 
+ * DESIGN PATTERN: Command Pattern
+ * - Đóng gói các yêu cầu (request) thành các object cụ thể.
+ * - Cho phép hàng đợi (queue), ghi log, hoặc thực thi chuỗi lệnh (Macro).
+ * - Hỗ trợ AI dễ dàng trigger một hoặc nhiều lệnh mà không cần biết chi tiết 
+ *   về việc cập nhật State như thế nào.
+ */
+
 import { useSmartHomeStore } from '../store';
 
+// Lấy type của Store để pass vào execute()
+type AppStore = ReturnType<typeof useSmartHomeStore.getState>;
+
+/**
+ * 1. COMMAND INTERFACE
+ * Tất cả các lệnh kỹ thuật đều phải implement interface này.
+ */
 export interface ICommand {
-  execute(): void;
-  getDescription(): string;
+  execute(store: AppStore): void;
 }
 
+/**
+ * 2. CONCRETE COMMANDS
+ */
+
+// Lệnh Bật/Tắt thiết bị (Dùng chung cho Đèn, AC, Khóa)
 export class ToggleDeviceCommand implements ICommand {
-  constructor(private roomId: string, private deviceId: string, private deviceName: string) {}
+  constructor(private roomId: string, private deviceId: string, private targetState?: boolean) {}
 
-  execute(): void {
-    useSmartHomeStore.getState().toggleDevice(this.roomId, this.deviceId);
-  }
-
-  getDescription(): string {
-    return `Đã đổi trạng thái (bật/tắt) thiết bị: ${this.deviceName}`;
-  }
-}
-
-export class ToggleLockCommand implements ICommand {
-  constructor(private roomId: string, private deviceId: string, private deviceName: string) {}
-
-  execute(): void {
-    useSmartHomeStore.getState().toggleLock(this.roomId, this.deviceId);
-  }
-
-  getDescription(): string {
-    return `Đã đổi trạng thái khóa: ${this.deviceName}`;
-  }
-}
-
-export class TurnOnDeviceCommand implements ICommand {
-  constructor(private roomId: string, private deviceId: string, private deviceName: string) {}
-
-  execute(): void {
-
-    const state = useSmartHomeStore.getState();
-    const room = state.rooms.find(r => r.id === this.roomId);
-    if (room) {
-      const device = room.devices.find(d => d.id === this.deviceId);
-      if (device && !device.status) {
-        state.toggleDevice(this.roomId, this.deviceId);
+  execute(store: AppStore): void {
+    // Nếu targetState được cung cấp, ta kiểm tra trạng thái hiện tại. 
+    // Nếu không khớp mới toggle để ép về đúng targetState.
+    if (this.targetState !== undefined) {
+      const room = store.rooms.find(r => r.id === this.roomId);
+      const device = room?.devices.find(d => d.id === this.deviceId);
+      if (device && device.status !== this.targetState) {
+        store.toggleDevice(this.roomId, this.deviceId);
       }
+    } else {
+      // Nếu không cung cấp, chỉ việc đảo ngược trạng thái (toggle)
+      store.toggleDevice(this.roomId, this.deviceId);
     }
   }
-
-  getDescription(): string {
-    return `Đã bật: ${this.deviceName}`;
-  }
 }
 
-export class TurnOffDeviceCommand implements ICommand {
-  constructor(private roomId: string, private deviceId: string, private deviceName: string) {}
+// Lệnh Thiết lập Công suất / Nhiệt độ / Độ sáng (Numerical Value)
+export class SetDeviceValueCommand implements ICommand {
+  constructor(
+    private roomId: string, 
+    private deviceId: string, 
+    private type: 'SmartLight' | 'SmartAC',
+    private value: number
+  ) {}
 
-  execute(): void {
-    const state = useSmartHomeStore.getState();
-    const room = state.rooms.find(r => r.id === this.roomId);
-    if (room) {
-      const device = room.devices.find(d => d.id === this.deviceId);
-      if (device && device.status) {
-        state.toggleDevice(this.roomId, this.deviceId);
-      }
+  execute(store: AppStore): void {
+    if (this.type === 'SmartLight') {
+      // Giữ nguyên màu hiện tại, chỉ đổi độ sáng
+      const room = store.rooms.find(r => r.id === this.roomId);
+      const device = room?.devices.find(d => d.id === this.deviceId);
+      const color = device && 'color' in device ? device.color : 'Warm White';
+      
+      store.updateLight(this.roomId, this.deviceId, this.value, color);
+    } else if (this.type === 'SmartAC') {
+      store.updateAC(this.roomId, this.deviceId, this.value);
     }
   }
-
-  getDescription(): string {
-    return `Đã tắt: ${this.deviceName}`;
-  }
 }
 
-export class SetACTemperatureCommand implements ICommand {
-  constructor(private roomId: string, private deviceId: string, private deviceName: string, private temp: number) {}
-
-  execute(): void {
-    useSmartHomeStore.getState().updateAC(this.roomId, this.deviceId, this.temp);
-  }
-
-  getDescription(): string {
-    return `Đã chỉnh nhiệt độ ${this.deviceName} thành ${this.temp}°C`;
-  }
-}
-
+/**
+ * 3. MACRO COMMAND (Composite Command)
+ * Chứa một chuỗi các Command con để thực thi đồng loạt.
+ * Phù hợp cho tính năng "Technical Routine" (Chế độ Ban đêm, Ra khỏi nhà...)
+ */
 export class MacroCommand implements ICommand {
   private commands: ICommand[] = [];
 
-  constructor(private macroName: string) {}
-
-  addCommand(cmd: ICommand): void {
-    this.commands.push(cmd);
-  }
-
-  execute(): void {
-
-    for (const cmd of this.commands) {
-      cmd.execute();
+  constructor(commands?: ICommand[]) {
+    if (commands) {
+      this.commands = commands;
     }
-
-    useSmartHomeStore.getState().addLog({
-      message: `Đã kích hoạt chế độ: ${this.macroName} (${this.commands.length} tác vụ)`,
-      type: 'info',
-      icon: 'sparkles'
-    });
   }
 
-  getDescription(): string {
-    return `Macro: ${this.macroName} gồm ${this.commands.length} lệnh con`;
-  }
-}
-
-export class CommandFactory {
-  static createSleepModeMacro(): MacroCommand {
-    const macro = new MacroCommand("Chế độ Đi Ngủ");
-    const state = useSmartHomeStore.getState();
-
-    state.rooms.forEach(room => {
-      room.devices.forEach(device => {
-        if (device.type === 'SmartLight') {
-           macro.addCommand(new TurnOffDeviceCommand(room.id, device.id, device.name));
-        } else if (device.type === 'SmartLock') {
-
-           if (!(device as any).isLocked) {
-             macro.addCommand(new ToggleLockCommand(room.id, device.id, device.name));
-           }
-        } else if (device.type === 'SmartAC') {
-           macro.addCommand(new SetACTemperatureCommand(room.id, device.id, device.name, 26));
-        }
-      });
-    });
-
-    return macro;
+  addCommand(command: ICommand): void {
+    this.commands.push(command);
   }
 
-  static createLeaveHomeMacro(): MacroCommand {
-    const macro = new MacroCommand("Chế độ Ra Khỏi Nhà");
-    const state = useSmartHomeStore.getState();
+  removeCommand(command: ICommand): void {
+    this.commands = this.commands.filter(cmd => cmd !== command);
+  }
 
-    state.rooms.forEach(room => {
-      room.devices.forEach(device => {
-        if (device.type === 'SmartLight' || device.type === 'SmartAC') {
-           macro.addCommand(new TurnOffDeviceCommand(room.id, device.id, device.name));
-        } else if (device.type === 'SmartLock') {
-           if (!(device as any).isLocked) {
-             macro.addCommand(new ToggleLockCommand(room.id, device.id, device.name));
-           }
-        }
-      });
+  execute(store: AppStore): void {
+    console.log(`[MacroCommand] Executing ${this.commands.length} technical commands in sequence...`);
+    this.commands.forEach(command => {
+      command.execute(store);
     });
-
-    return macro;
   }
 }
