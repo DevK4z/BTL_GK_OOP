@@ -111,10 +111,6 @@ interface SmartHomeStore {
   removeRoom: (roomId: string) => void;
   addDevice: (roomId: string, device: DeviceData) => void;
   removeDevice: (roomId: string, deviceId: string) => void;
-
-  addFurniture: (roomId: string, type: 'Sofa' | 'Table' | 'TV' | 'Plant') => void;
-  updateFurniture: (roomId: string, id: string, position: [number, number, number], rotation: [number, number, number]) => void;
-  removeFurniture: (roomId: string, id: string) => void;
 }
 
 export const useSmartHomeStore = create<SmartHomeStore>()(
@@ -259,47 +255,6 @@ export const useSmartHomeStore = create<SmartHomeStore>()(
               ? { ...room, devices: room.devices.filter((d) => d.id !== deviceId) }
               : room,
           ),
-        })),
-
-      addFurniture: (roomId, type) =>
-        set((state) => ({
-          rooms: state.rooms.map((room) => {
-            if (room.id !== roomId) return room;
-            const newFurniture = {
-              id: `F-${Date.now()}`,
-              type,
-              position: [0, 0, 0] as [number, number, number],
-              rotation: [0, 0, 0] as [number, number, number]
-            };
-            return {
-              ...room,
-              furniture: [...(room.furniture || []), newFurniture]
-            };
-          })
-        })),
-
-      updateFurniture: (roomId, id, position, rotation) =>
-        set((state) => ({
-          rooms: state.rooms.map((room) => {
-            if (room.id !== roomId) return room;
-            return {
-              ...room,
-              furniture: (room.furniture || []).map(f => 
-                f.id === id ? { ...f, position, rotation } : f
-              )
-            };
-          })
-        })),
-
-      removeFurniture: (roomId, id) =>
-        set((state) => ({
-          rooms: state.rooms.map((room) => {
-            if (room.id !== roomId) return room;
-            return {
-              ...room,
-              furniture: (room.furniture || []).filter(f => f.id !== id)
-            };
-          })
         })),
     }),
     {

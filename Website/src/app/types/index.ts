@@ -21,21 +21,13 @@ export type SmartLightDevice = DeviceData & { type: 'SmartLight'; brightness: nu
 export type SmartACDevice = DeviceData & { type: 'SmartAC'; temperature: number };
 export type SmartLockDevice = DeviceData & { type: 'SmartLock'; isLocked: boolean; passcode: string };
 
-export type FurnitureType = 'Sofa' | 'Table' | 'TV' | 'Plant';
 
-export interface FurnitureData {
-  id: string;
-  type: FurnitureType;
-  position: [number, number, number];
-  rotation: [number, number, number];
-}
 
 export interface RoomData {
   id: string;
   name: string;
   icon: string;
   devices: DeviceData[];
-  furniture?: FurnitureData[];
 }
 
 export interface ActivityLog {

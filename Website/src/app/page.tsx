@@ -13,16 +13,7 @@ import OOPView from './components/views/OOPView';
 import { useSmartHomeStore } from './store';
 import { useSmartHome } from './hooks/useSmartHome';
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 
-const SmartHome3DView = dynamic(
-  () => import('./components/views/SmartHome3DView'),
-  { ssr: false, loading: () => (
-    <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  )}
-);
 export default function Home() {
   const { sidebarCollapsed, activeView } = useSmartHomeStore();
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -56,7 +47,6 @@ export default function Home() {
               {activeView === 'power' && 'Phân Tích Điện Năng'}
               {activeView === 'logs' && 'Nhật Ký Hệ Thống'}
               {activeView === 'oop' && 'OOP Architecture'}
-              {activeView === '3d-twin' && '3D Digital Twin'}
             </h1>
             <p className="page-header__subtitle">Smart Home Hub • BTL Giữa Kỳ OOP</p>
           </div>
@@ -107,18 +97,6 @@ export default function Home() {
             {activeView === 'logs' && <LogsView />}
 
             {activeView === 'oop' && <OOPView />}
-
-            {activeView === '3d-twin' && (
-              <SmartHome3DView
-                rooms={rooms}
-                onToggleDevice={(roomId, deviceId) => {
-                  useSmartHomeStore.getState().toggleDevice(roomId, deviceId);
-                }}
-                onToggleLock={(roomId, deviceId) => {
-                  useSmartHomeStore.getState().toggleLock(roomId, deviceId);
-                }}
-              />
-            )}
           </>
         ) : (
           <div className="flex items-center justify-center h-64">
