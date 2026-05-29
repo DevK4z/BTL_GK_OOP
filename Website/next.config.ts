@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Cấu hình tối ưu chuẩn của Vercel (bỏ export và basePath)
+  output: 'export',
+  basePath: '/BTL_GK_OOP',
   images: {
-    unoptimized: false, // Bật tối ưu hóa hình ảnh chuẩn Next.js
+    unoptimized: true, // Bắt buộc khi dùng export trên GitHub Pages
   },
   eslint: {
     ignoreDuringBuilds: true,
