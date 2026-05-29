@@ -10,7 +10,6 @@ import DevicesView from './components/views/DevicesView';
 import PowerView from './components/views/PowerView';
 import LogsView from './components/views/LogsView';
 import OOPView from './components/views/OOPView';
-import SmartChatbot from './components/ui/SmartChatbot';
 import { useSmartHomeStore } from './store';
 import { useSmartHome } from './hooks/useSmartHome';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -147,9 +146,6 @@ export default function Home() {
           roomName={addDeviceTarget.roomName}
         />
       )}
-
-      {/* Tích hợp Chatbot Kỹ Thuật */}
-      {mounted && <SmartChatbot />}
     </div>
   );
 }
