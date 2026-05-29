@@ -1,6 +1,7 @@
 import { Zap } from 'lucide-react';
 import MetricCard from '../dashboard/MetricCard';
 import EnergyChart from '../dashboard/EnergyChart';
+import PowerAnalytics from '../dashboard/PowerAnalytics';
 import { getRoomPower } from '../../store';
 import type { RoomData } from '../../types';
 
@@ -36,6 +37,8 @@ export default function PowerView({ rooms, totalSystemPower }: PowerViewProps) {
         ))}
       </div>
       <EnergyChart />
+      <PowerAnalytics rooms={rooms} />
     </section>
   );
 }
+

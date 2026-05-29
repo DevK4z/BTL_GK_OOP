@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Sparkles, Brain, AlertTriangle, AlertCircle, Play, Check, RefreshCw } from 'lucide-react';
-import { useSmartHome } from '../../hooks/useSmartHome';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Sparkles, Brain, AlertTriangle, Play, Check, RefreshCw } from 'lucide-react';
 import { useSmartHomeStore, getTotalSystemPower } from '../../store';
 import { analyzeHomeStateWithAI, AIRecommendation } from '../../utils/geminiApi';
 
@@ -67,10 +66,15 @@ export default function AIAdvisorPanel() {
     }
   };
 
+  // Track device count with ref to avoid infinite re-render
+  const prevDeviceCountRef = useRef(deviceInstances.length);
   useEffect(() => {
-
+    if (prevDeviceCountRef.current !== deviceInstances.length) {
+      prevDeviceCountRef.current = deviceInstances.length;
+    }
     fetchInsights();
-  }, [deviceInstances.length]); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceInstances.length]);
 
   const handleExecute = (rec: AIRecommendation) => {
     const deviceId = rec.targetDeviceId;

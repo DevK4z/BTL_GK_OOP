@@ -27,7 +27,6 @@ class Logger:
         with open(filename, "a", encoding="utf-8") as file:
             file.write(content)
 
-
 class ConnectionException(Exception):
     def __init__(self, device_name: str):
         self.message = f"ConnectionException: Thiet bi '{device_name}' mat ket noi!"

@@ -18,7 +18,8 @@ export async function chatWithGemini(
   apiKey: string,
   rooms: Room[]
 ): Promise<ChatResponse> {
-  const finalApiKey = apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBPVzSO1qPnnFeGNLoclpG_JeQruSDMmsQ';
+  // Ưu tiên biến môi trường (.env) trước, sau đó mới dùng key trong localStorage
+  const finalApiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || apiKey || '';
   if (!finalApiKey) {
     throw new Error("API Key is missing");
   }
@@ -26,27 +27,70 @@ export async function chatWithGemini(
   const systemContext = `
 Bạn là Trợ lý ảo AI của hệ thống Smart Home Hub (BTL Giữa Kỳ OOP).
 Tên của bạn là "SmartHub AI". Bạn phải trả lời ngắn gọn, thân thiện và bằng tiếng Việt.
-Bạn có quyền truy cập vào trạng thái hiện tại của các thiết bị trong nhà.
+Bạn có TOÀN QUYỀN truy cập và điều khiển hệ thống Smart Home qua Function Calling.
 
-Trạng thái hệ thống hiện tại:
-${rooms.map(room => `
-- ${room.name}:
-${room.devices.length === 0 ? "  (Không có thiết bị)" : room.devices.map(d => {
-    let statusStr = d.status ? "Đang BẬT" : "Đang TẮT";
-    if (d.type === 'SmartLock') {
-        statusStr = (d as any).isLocked ? "Đang KHÓA" : "Đang MỞ KHÓA";
-    }
-    let extra = "";
-    if (d.type === 'SmartLight') extra = `(Sáng: ${(d as any).brightness}%, Màu: ${(d as any).color})`;
-    if (d.type === 'SmartAC') extra = `(Nhiệt độ: ${(d as any).temperature}°C)`;
-    return `  + ${d.name} [ID: ${d.id}] - ${statusStr} ${extra}`;
-}).join('\n')}
-`).join('')}
+═══════════════ TRẠNG THÁI HỆ THỐNG ═══════════════
+Danh sách phòng (Room ID — Tên phòng — Icon):
+${rooms.map(room => {
+    const deviceLines = room.devices.length === 0
+      ? "  (Trống — chưa có thiết bị)"
+      : room.devices.map(d => {
+          let statusStr = d.status ? "✅ BẬT" : "⬜ TẮT";
+          let details = "";
+          if (d.type === 'SmartLight') {
+            details = "| Sáng: " + (d as any).brightness + "% | Màu: " + (d as any).color;
+          }
+          if (d.type === 'SmartAC') {
+            details = "| Nhiệt độ: " + (d as any).temperature + "°C";
+          }
+          if (d.type === 'SmartLock') {
+            statusStr = (d as any).isLocked ? "🔒 KHÓA" : "🔓 MỞ";
+            details = "";
+          }
+          const onlineStr = d.isOnline ? "🟢 Online" : "🔴 Offline";
+          return "  [" + d.id + "] " + d.name + " — " + d.type + " — " + statusStr + " " + details + " — " + onlineStr;
+        }).join('\n');
+    return "\n📍 [" + room.id + "] " + room.name + " (icon: " + room.icon + ")\n" + deviceLines;
+  }).join('')}
 
-MỤC TIÊU CỦA BẠN:
-1. Trả lời các câu hỏi của người dùng về trạng thái nhà.
-2. NẾU người dùng ra lệnh điều khiển thiết bị, BẠN PHẢI GỌI HÀM (Function Calling) TƯƠNG ỨNG thay vì chỉ trả lời suông.
-3. Nếu người dùng muốn kích hoạt các "chế độ" (như đi ngủ, ra khỏi nhà), hãy gọi hàm execute_macro.
+═══════════════ NĂNG LỰC CỦA BẠN ═══════════════
+Bạn có thể thực hiện TẤT CẢ các thao tác sau qua Function Calling:
+
+🔌 ĐIỀU KHIỂN THIẾT BỊ:
+  • toggle_device — Bật/tắt đèn hoặc điều hòa
+  • toggle_lock — Khóa/mở khóa cửa SmartLock
+  • set_temperature — Chỉnh nhiệt độ điều hòa (16-30°C)
+  • update_light — Chỉnh độ sáng (0-100%) và màu đèn
+  • set_device_online — Đặt trạng thái online/offline
+
+🏠 QUẢN LÝ PHÒNG:
+  • add_room — Tạo phòng mới (icon: sofa, cooking-pot, bed-double, warehouse)
+  • remove_room — Xóa phòng (và toàn bộ thiết bị bên trong)
+
+📱 QUẢN LÝ THIẾT BỊ:
+  • add_device — Thêm thiết bị mới vào phòng
+  • remove_device — Xóa thiết bị khỏi phòng
+
+🚀 CHẾ ĐỘ TỰ ĐỘNG (Macro):
+  • execute_macro — Kích hoạt chế độ tự động:
+    - "sleep_mode": Tắt đèn, khóa cửa, đặt điều hòa 26°C
+    - "leave_home": Tắt tất cả đèn + điều hòa, khóa hết cửa
+
+🧭 ĐIỀU HƯỚNG GIAO DIỆN:
+  • navigate_view — Chuyển đổi trang hiển thị:
+    - "overview": Tổng quan hệ thống
+    - "rooms": Quản lý phòng
+    - "devices": Quản lý thiết bị
+    - "power": Phân tích điện năng
+    - "logs": Nhật ký hệ thống
+    - "oop": Kiến trúc OOP
+
+═══════════════ QUY TẮC ═══════════════
+1. NẾU người dùng ra lệnh, BẮT BUỘC gọi hàm Function Calling tương ứng.
+2. Khi tạo thiết bị mới, tự sinh ID theo format "D" + số (VD: D12, D13...).
+3. Khi thêm phòng, chọn icon phù hợp nhất với tên phòng.
+4. Trả lời ngắn gọn, dùng emoji để sinh động.
+5. Nếu yêu cầu không rõ ràng, hỏi lại.
 `;
 
   const tools = [
@@ -54,13 +98,13 @@ MỤC TIÊU CỦA BẠN:
       functionDeclarations: [
         {
           name: "execute_macro",
-          description: "Kích hoạt một chế độ tự động hóa (Macro) gồm nhiều hành động.",
+          description: "Kích hoạt một chế độ tự động hóa (Macro) gồm nhiều hành động đồng thời.",
           parameters: {
             type: "OBJECT",
             properties: {
               macro_name: {
                 type: "STRING",
-                description: "Tên macro cần chạy. Các giá trị hợp lệ: 'sleep_mode' (Đi ngủ), 'leave_home' (Ra khỏi nhà)."
+                description: "Tên macro: 'sleep_mode' (Đi ngủ) hoặc 'leave_home' (Ra khỏi nhà)."
               }
             },
             required: ["macro_name"]
@@ -68,36 +112,121 @@ MỤC TIÊU CỦA BẠN:
         },
         {
           name: "toggle_device",
-          description: "Bật hoặc tắt một thiết bị thông minh (Đèn, Điều hòa).",
+          description: "Bật hoặc tắt một thiết bị thông minh (SmartLight, SmartAC). Không dùng cho SmartLock.",
           parameters: {
             type: "OBJECT",
             properties: {
-              device_id: { type: "STRING", description: "ID của thiết bị cần điều khiển (VD: D1, D2)." }
+              device_id: { type: "STRING", description: "ID thiết bị (VD: D1, D3)." }
             },
             required: ["device_id"]
           }
         },
         {
           name: "toggle_lock",
-          description: "Khóa hoặc mở khóa một cửa thông minh (SmartLock).",
+          description: "Khóa hoặc mở khóa một SmartLock (cửa thông minh).",
           parameters: {
             type: "OBJECT",
             properties: {
-              device_id: { type: "STRING", description: "ID của khóa cửa (VD: D4)." }
+              device_id: { type: "STRING", description: "ID khóa cửa (VD: D4, D9)." }
             },
             required: ["device_id"]
           }
         },
         {
           name: "set_temperature",
-          description: "Điều chỉnh nhiệt độ cho Điều hòa (SmartAC).",
+          description: "Điều chỉnh nhiệt độ cho Điều hòa (SmartAC). Phạm vi: 16-30°C.",
           parameters: {
             type: "OBJECT",
             properties: {
               device_id: { type: "STRING", description: "ID của Điều hòa." },
-              temperature: { type: "NUMBER", description: "Nhiệt độ (độ C) cần cài đặt." }
+              temperature: { type: "NUMBER", description: "Nhiệt độ mong muốn (°C), từ 16 đến 30." }
             },
             required: ["device_id", "temperature"]
+          }
+        },
+        {
+          name: "update_light",
+          description: "Chỉnh độ sáng và/hoặc màu sắc cho SmartLight (đèn thông minh).",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              device_id: { type: "STRING", description: "ID đèn cần chỉnh (VD: D1, D2)." },
+              brightness: { type: "NUMBER", description: "Độ sáng mong muốn (0-100%)." },
+              color: { type: "STRING", description: "Màu sắc: 'Warm White', 'Cool White', 'Daylight', 'Sunset', 'Ocean Blue', 'Forest Green', 'Rose Pink', 'Party Mode'." }
+            },
+            required: ["device_id", "brightness", "color"]
+          }
+        },
+        {
+          name: "set_device_online",
+          description: "Đặt trạng thái kết nối online/offline cho một thiết bị.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              device_id: { type: "STRING", description: "ID thiết bị." },
+              online: { type: "BOOLEAN", description: "true = online, false = offline." }
+            },
+            required: ["device_id", "online"]
+          }
+        },
+        {
+          name: "add_room",
+          description: "Tạo một phòng mới trong hệ thống Smart Home.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              room_name: { type: "STRING", description: "Tên phòng (VD: 'Phòng Làm Việc', 'Sân Thượng')." },
+              icon: { type: "STRING", description: "Icon cho phòng: 'sofa' (phòng khách), 'cooking-pot' (bếp), 'bed-double' (phòng ngủ), 'warehouse' (gara/kho)." }
+            },
+            required: ["room_name", "icon"]
+          }
+        },
+        {
+          name: "remove_room",
+          description: "Xóa một phòng và toàn bộ thiết bị bên trong khỏi hệ thống. Cần xác nhận trước khi xóa.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              room_id: { type: "STRING", description: "ID phòng cần xóa (VD: room-1, room-2)." }
+            },
+            required: ["room_id"]
+          }
+        },
+        {
+          name: "add_device",
+          description: "Thêm một thiết bị mới vào một phòng cụ thể.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              room_id: { type: "STRING", description: "ID phòng muốn thêm thiết bị (VD: room-1)." },
+              device_type: { type: "STRING", description: "Loại thiết bị: 'SmartLight', 'SmartAC', hoặc 'SmartLock'." },
+              device_name: { type: "STRING", description: "Tên hiển thị cho thiết bị (VD: 'Đèn trần', 'Điều hòa phòng ngủ')." },
+              device_id: { type: "STRING", description: "ID duy nhất cho thiết bị mới (VD: D12, D13). Phải khác tất cả ID hiện có." }
+            },
+            required: ["room_id", "device_type", "device_name", "device_id"]
+          }
+        },
+        {
+          name: "remove_device",
+          description: "Xóa một thiết bị khỏi một phòng.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              room_id: { type: "STRING", description: "ID phòng chứa thiết bị." },
+              device_id: { type: "STRING", description: "ID thiết bị cần xóa." }
+            },
+            required: ["room_id", "device_id"]
+          }
+        },
+        {
+          name: "navigate_view",
+          description: "Chuyển đổi trang hiển thị trên giao diện dashboard.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              view: { type: "STRING", description: "Tên trang: 'overview' (Tổng quan), 'rooms' (Quản lý phòng), 'devices' (Thiết bị), 'power' (Phân tích điện năng), 'logs' (Nhật ký), 'oop' (Kiến trúc OOP)." }
+            },
+            required: ["view"]
           }
         }
       ]
@@ -177,7 +306,8 @@ export async function analyzeHomeStateWithAI(
   totalPower: number,
   apiKey: string
 ): Promise<AIRecommendation[]> {
-  const finalKey = apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBPVzSO1qPnnFeGNLoclpG_JeQruSDMmsQ';
+  // Ưu tiên biến môi trường (.env) trước, sau đó mới dùng key trong localStorage
+  const finalKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || apiKey || '';
   if (!finalKey) {
     throw new Error("Không tìm thấy API Key. Vui lòng thêm NEXT_PUBLIC_GEMINI_API_KEY vào .env hoặc nhập ở Floating Chat.");
   }

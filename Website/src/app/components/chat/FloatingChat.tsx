@@ -114,9 +114,12 @@ export default function FloatingChat() {
   const handleFunctionCalls = (functionCalls: any[]) => {
     if (!functionCalls || functionCalls.length === 0) return;
 
+    const store = useSmartHomeStore.getState();
+
     functionCalls.forEach((fc) => {
       const { name, args } = fc;
 
+      // ══════════ MACRO ══════════
       if (name === 'execute_macro') {
         const macroName = args.macro_name;
         if (macroName === 'sleep_mode') {
@@ -126,8 +129,59 @@ export default function FloatingChat() {
           const macro = CommandFactory.createLeaveHomeMacro();
           macro.execute();
         }
-      } 
-      else if (name === 'toggle_device' || name === 'toggle_lock' || name === 'set_temperature') {
+      }
+      // ══════════ NAVIGATE ══════════
+      else if (name === 'navigate_view') {
+        const validViews = ['overview', 'rooms', 'devices', 'power', 'logs', 'oop'];
+        if (validViews.includes(args.view)) {
+          store.setActiveView(args.view);
+          addLog({ message: `AI chuyển đến trang: ${args.view}`, type: 'info', icon: 'compass' });
+        }
+      }
+      // ══════════ ROOM MANAGEMENT ══════════
+      else if (name === 'add_room') {
+        const newRoomId = store.addRoom(args.room_name, args.icon || 'sofa');
+        addLog({ message: `AI đã tạo phòng mới: ${args.room_name}`, type: 'success', icon: 'plus' });
+      }
+      else if (name === 'remove_room') {
+        const room = rooms.find(r => r.id === args.room_id);
+        if (room) {
+          store.removeRoom(args.room_id);
+          addLog({ message: `AI đã xóa phòng: ${room.name}`, type: 'warning', icon: 'trash-2' });
+        }
+      }
+      // ══════════ DEVICE MANAGEMENT ══════════
+      else if (name === 'add_device') {
+        const deviceType = args.device_type as 'SmartLight' | 'SmartAC' | 'SmartLock';
+        const defaults: Record<string, Partial<any>> = {
+          SmartLight: { basePower: 60, brightness: 80, color: 'Warm White' },
+          SmartAC: { basePower: 1200, temperature: 25 },
+          SmartLock: { basePower: 5, isLocked: true, passcode: '0000' },
+        };
+        const d = defaults[deviceType] || defaults.SmartLight;
+        const newDevice: any = {
+          type: deviceType,
+          id: args.device_id || `D${Date.now()}`,
+          name: args.device_name,
+          status: false,
+          basePower: d.basePower,
+          isOnline: true,
+          ...d,
+        };
+        store.addDevice(args.room_id, newDevice);
+        addLog({ message: `AI đã thêm thiết bị: ${args.device_name}`, type: 'success', icon: 'plus-circle' });
+      }
+      else if (name === 'remove_device') {
+        const room = rooms.find(r => r.id === args.room_id);
+        const device = room?.devices.find(d => d.id === args.device_id);
+        if (room && device) {
+          store.removeDevice(args.room_id, args.device_id);
+          addLog({ message: `AI đã xóa thiết bị: ${device.name}`, type: 'warning', icon: 'trash-2' });
+        }
+      }
+      // ══════════ DEVICE CONTROL ══════════
+      else if (name === 'toggle_device' || name === 'toggle_lock' || name === 'set_temperature'
+               || name === 'update_light' || name === 'set_device_online') {
         const deviceId = args.device_id;
         const room = rooms.find(r => r.devices.some(d => d.id === deviceId));
         if (!room) return;
@@ -135,12 +189,27 @@ export default function FloatingChat() {
         if (!device) return;
 
         let cmd = null;
+
         if (name === 'toggle_device') {
           cmd = new ToggleDeviceCommand(room.id, deviceId, device.name);
         } else if (name === 'toggle_lock') {
           cmd = new ToggleLockCommand(room.id, deviceId, device.name);
         } else if (name === 'set_temperature') {
           cmd = new SetACTemperatureCommand(room.id, deviceId, device.name, args.temperature);
+        } else if (name === 'update_light') {
+          store.updateLight(room.id, deviceId, args.brightness, args.color);
+          addLog({
+            message: `AI đã chỉnh đèn ${device.name}: ${args.brightness}% - ${args.color}`,
+            type: 'info',
+            icon: 'bot'
+          });
+        } else if (name === 'set_device_online') {
+          store.setOnline(room.id, deviceId, args.online);
+          addLog({
+            message: `AI đã đặt ${device.name} ${args.online ? 'Online' : 'Offline'}`,
+            type: 'info',
+            icon: 'bot'
+          });
         }
 
         if (cmd) {
@@ -159,9 +228,12 @@ export default function FloatingChat() {
     e?.preventDefault();
     if (!input.trim() || isTyping) return;
 
-    if (!apiKey) {
+    // Resolve the effective API key: env > store > empty
+    const effectiveKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || apiKey || '';
 
-      if (input.trim().startsWith('AIza')) {
+    if (!effectiveKey) {
+      // No key available anywhere — prompt user to enter manually
+      if (input.trim().length > 20) {
         setApiKey(input.trim());
         addChatMessage({
           role: 'assistant',
@@ -175,11 +247,16 @@ export default function FloatingChat() {
         });
         addChatMessage({
           role: 'assistant',
-          content: 'Vui lòng nhập API Key hợp lệ (bắt đầu bằng AIza...) để sử dụng tính năng này.'
+          content: 'Vui lòng nhập API Key hợp lệ để sử dụng tính năng này.'
         });
         setInput('');
       }
       return;
+    }
+
+    // If store key is empty but env key exists, persist it to store
+    if (!apiKey && effectiveKey) {
+      setApiKey(effectiveKey);
     }
 
     const userMessage = input.trim();
@@ -277,7 +354,7 @@ export default function FloatingChat() {
           </div>
         </div>
 
-        {!apiKey && chatHistory.length === 0 && (
+        {!apiKey && !process.env.NEXT_PUBLIC_GEMINI_API_KEY && chatHistory.length === 0 && (
           <div className="p-4 m-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-200 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 font-semibold text-blue-400">
               <KeyRound size={16} /> Nhập Gemini API Key
@@ -288,7 +365,7 @@ export default function FloatingChat() {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
 
-          {chatHistory.length === 0 && apiKey && (
+          {chatHistory.length === 0 && (apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY) && (
              <div className="flex items-start gap-2 max-w-[85%]">
                <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
                  <Bot size={16} />
@@ -347,7 +424,7 @@ export default function FloatingChat() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={!apiKey ? "Nhập API Key bắt đầu bằng AIza..." : (isListening ? "Đang nghe..." : "Hỏi AI về hệ thống...")}
+              placeholder={(!apiKey && !process.env.NEXT_PUBLIC_GEMINI_API_KEY) ? "Nhập API Key..." : (isListening ? "Đang nghe..." : "Hỏi AI về hệ thống...")}
               className="flex-1 bg-transparent border-none outline-none text-[14px] text-white placeholder:text-gray-500 min-w-0"
               disabled={isTyping}
             />

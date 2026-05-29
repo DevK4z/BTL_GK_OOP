@@ -30,10 +30,18 @@ export default function RoomCard({ room, onClick }: RoomCardProps) {
   const totalDevices = room.devices.length;
 
   return (
-    <button
+    <div
       className="room-card"
       id={`room-card-${room.id}`}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
     >
       <div className="room-card__header">
         <div className="room-card__icon-wrap">
@@ -91,6 +99,6 @@ export default function RoomCard({ room, onClick }: RoomCardProps) {
           );
         })}
       </div>
-    </button>
+    </div>
   );
 }

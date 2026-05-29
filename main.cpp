@@ -1,16 +1,17 @@
 #include <bits/stdc++.h>
+#include "nlohmann/json.hpp"
 #define fl ios_base::sync_with_stdio(false), cin.tie(NULL), cout.tie(NULL)
 #define lin signed main()
 using namespace std;
+using json = nlohmann::json;
 class logger {
-    private:
+    public:
     static string get_timestamp() {
         time_t now = time(nullptr);
         char buf[64];
         strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&now));
         return string(buf);
     }
-    public:
     static void log(const string &message) {
         ofstream file("home_data.txt", ios::app);
         if (file.is_open()) file << "[LOG " << get_timestamp() << "] " << message << "\n";
@@ -55,6 +56,8 @@ class Device {
         virtual void operate() = 0;
         virtual double get_power_consumption() = 0;
         virtual string get_in4() const = 0;
+        virtual json to_json() const = 0;
+        static shared_ptr<Device> from_json(const json &j);
         string get_info() const { return get_in4(); }
         friend double operator+(const Device &a, const Device &b) {
             return a.get_power_const() + b.get_power_const();
@@ -104,6 +107,13 @@ class SmartLight : public Device {
             oss << "SmartLight [" << id << "] " << name << " | Brightness: " << bright << "% | Color: " << color << " | Power: " << (status ? power * (bright / 100.0) : 0.0) << "W";
             return oss.str();
         }
+        json to_json() const override {
+            return json{
+                {"type", "SmartLight"}, {"id", id}, {"name", name},
+                {"status", status}, {"power", power}, {"online", onl},
+                {"brightness", bright}, {"color", color}
+            };
+        }
     protected:
         double get_power_const() const override {
             if (!status) return 0.0;
@@ -135,6 +145,13 @@ class SmartAC : public Device {
             ostringstream oss;
             oss << "SmartAC [" << id << "] " << name << " | Temperature: " << t << "°C | Power: " << (status ? power : 0.0) << "W";
             return oss.str();
+        }
+        json to_json() const override {
+            return json{
+                {"type", "SmartAC"}, {"id", id}, {"name", name},
+                {"status", status}, {"power", power}, {"online", onl},
+                {"temperature", t}
+            };
         }
     protected:
         double get_power_const() const override {
@@ -182,11 +199,62 @@ class SmartLock : public Device {
             oss << "SmartLock [" << id << "] " << name << " | Lock: " << (lock ? "LOCKED" : "UNLOCKED") << " | Power: " << (status ? power : 0.0) << "W";
             return oss.str();
         }
+        json to_json() const override {
+            return json{
+                {"type", "SmartLock"}, {"id", id}, {"name", name},
+                {"status", status}, {"power", power}, {"online", onl},
+                {"locked", lock}, {"passcode", pass}
+            };
+        }
     protected:
         double get_power_const() const override {
             return status ? power : 0.0;
         }
 };
+
+// ===== FACTORY METHOD: Polymorphic Deserialization =====
+shared_ptr<Device> Device::from_json(const json &j) {
+    string type = j.at("type").get<string>();
+    string dev_id = j.at("id").get<string>();
+    string dev_name = j.at("name").get<string>();
+    bool dev_status = j.at("status").get<bool>();
+    double dev_power = j.at("power").get<double>();
+    bool dev_online = j.at("online").get<bool>();
+
+    shared_ptr<Device> device;
+    if (type == "SmartLight") {
+        int brightness = j.at("brightness").get<int>();
+        string color = j.at("color").get<string>();
+        auto sl = make_shared<SmartLight>(dev_id, dev_name, dev_power, brightness, color);
+        sl->set_status(dev_status);
+        sl->set_onl(dev_online);
+        device = sl;
+    } else if (type == "SmartAC") {
+        double temperature = j.at("temperature").get<double>();
+        auto sa = make_shared<SmartAC>(dev_id, dev_name, dev_power, temperature);
+        sa->set_status(dev_status);
+        sa->set_onl(dev_online);
+        device = sa;
+    } else if (type == "SmartLock") {
+        string passcode = j.at("passcode").get<string>();
+        auto sk = make_shared<SmartLock>(dev_id, dev_name, passcode);
+        sk->set_power(dev_power);
+        sk->set_status(dev_status);
+        sk->set_onl(dev_online);
+        if (j.contains("locked")) {
+            // Restore lock state: if saved as unlocked, operate to toggle
+            bool locked_state = j.at("locked").get<bool>();
+            if (!locked_state) {
+                // SmartLock defaults to locked=true, so unlock it
+                sk->unlock(passcode);
+            }
+        }
+        device = sk;
+    } else {
+        throw runtime_error("Unknown device type: " + type);
+    }
+    return device;
+}
 class Room {
     private:
         string name;
@@ -257,6 +325,59 @@ class SmartHomeHub {
             return total;
         }
         double getTotalPower() const { return get_total_power(); }
+
+        // ===== JSON EXPORT (Serialize) =====
+        void export_data(const string &filename) const {
+            json j;
+            j["hub_name"] = name;
+            j["exported_at"] = logger::get_timestamp();
+            j["total_power_watts"] = get_total_power();
+            j["room_count"] = roooms.size();
+            j["rooms"] = json::array();
+            for (const auto &room : roooms) {
+                json room_json;
+                room_json["name"] = room.get_name();
+                room_json["device_count"] = room.get_device_count();
+                room_json["room_power_watts"] = room.get_room_power();
+                room_json["devices"] = json::array();
+                for (size_t i = 0; i < room.get_device_count(); ++i) {
+                    room_json["devices"].push_back(room.get_device(i)->to_json());
+                }
+                j["rooms"].push_back(room_json);
+            }
+            ofstream file(filename);
+            if (!file.is_open()) {
+                logger::log_error("Khong the mo file de xuat: " + filename);
+                return;
+            }
+            file << j.dump(2);  // pretty-print with 2-space indent
+            logger::log("Da xuat trang thai he thong ra file JSON: " + filename);
+        }
+
+        // ===== JSON IMPORT (Deserialize) =====
+        void import_data(const string &filename) {
+            ifstream file(filename);
+            if (!file.is_open()) {
+                throw runtime_error("Khong the mo file: " + filename);
+            }
+            try {
+                json j = json::parse(file);
+                name = j.at("hub_name").get<string>();
+                roooms.clear();
+                for (const auto &rj : j.at("rooms")) {
+                    Room room(rj.at("name").get<string>());
+                    for (const auto &dj : rj.at("devices")) {
+                        room.add_device(Device::from_json(dj));
+                    }
+                    roooms.push_back(room);
+                }
+                logger::log("Da import thanh cong tu file JSON: " + filename);
+            } catch (const json::exception &e) {
+                throw runtime_error("Loi parse JSON: " + string(e.what()));
+            }
+        }
+
+        // ===== Legacy text export (backward compatible) =====
         void save_state_to_file(const string &filename) const {
             ofstream file(filename, ios::app);
             if (!file.is_open()) {
@@ -271,6 +392,7 @@ class SmartHomeHub {
             logger::log("Da luu trang thai he thong ra file " + filename);
         }
         void saveStateToFile(const string &filename) const { save_state_to_file(filename); }
+
         void display_status() const {
             cout << "\n  Hub: " << name << " | So phong: " << roooms.size() << endl;
             for (const auto &room : roooms) cout << "  " << room.get_info();
@@ -311,7 +433,9 @@ lin {
         cout << "  7. Cong dien nang 2 thiet bi (operator+)" << endl;
         cout << "  8. Mo khoa SmartLock (nhap mat khau)" << endl;
         cout << "  9. Gia lap mat ket noi thiet bi" << endl;
-        cout << "  10. Xuat trang thai ra file home_data.txt" << endl;
+        cout << "  10. Xuat trang thai ra file JSON (home_state.json)" << endl;
+        cout << "  11. Import trang thai tu file JSON" << endl;
+        cout << "  12. Xuat trang thai ra file text (home_data.txt)" << endl;
         cout << "  0. Thoat" << endl;
         cout << string(50, '-') << endl;
         cout << "  Lua chon: ";
@@ -658,8 +782,26 @@ lin {
             }
         }
         else if (choice == 10) {
+            hub.export_data("home_state.json");
+            cout << "  >> Da xuat trang thai ra file 'home_state.json' (JSON)" << endl;
+        }
+        else if (choice == 11) {
+            string import_file;
+            cout << "  Nhap ten file JSON (mac dinh: home_state.json): ";
+            getline(cin, import_file);
+            if (import_file.empty()) import_file = "home_state.json";
+            try {
+                hub.import_data(import_file);
+                cout << "  >> Import thanh cong tu '" << import_file << "'!" << endl;
+                cout << "  >> Hub: " << hub.get_hub_name() << " | So phong: " << hub.get_room_count() << endl;
+            } catch (const exception &e) {
+                cout << "  !! LOI: " << e.what() << endl;
+                logger::log_error(e.what());
+            }
+        }
+        else if (choice == 12) {
             hub.saveStateToFile("home_data.txt");
-            cout << "  >> Da xuat trang thai ra file 'home_data.txt'" << endl;
+            cout << "  >> Da xuat trang thai ra file 'home_data.txt' (text)" << endl;
         }
         else {
             cout << "  !! Lua chon khong hop le. Vui long chon lai." << endl;
