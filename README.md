@@ -1,105 +1,83 @@
-# 🏠 Smart Home Hub - OOP Midterm Project
+# 🏠 Smart Home Hub - 3D Digital Twin & AI Assistant
 
-[![University](https://img.shields.io/badge/University-VJU-blue.svg)](#)
-[![Next.js](https://img.shields.io/badge/Frontend-Next.js-black?logo=next.js)](#)
-[![C++](https://img.shields.io/badge/Core-C%2B%2B-00599C?logo=c%2B%2B)](#)
-[![Python](https://img.shields.io/badge/Core-Python-3776AB?logo=python)](#)
+[![University](https://img.shields.io/badge/University-VJU-blue.svg?style=for-the-badge&logo=institution)](https://vju.ac.vn/)
+[![Frontend](https://img.shields.io/badge/Frontend-Next.js_14-black?style=for-the-badge&logo=next.js)](#)
+[![3D Engine](https://img.shields.io/badge/WebGL-Three.js-white?style=for-the-badge&logo=three.js)](#)
+[![Core](https://img.shields.io/badge/Core-C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B)](#)
 
-Dự án **Smart Home Hub** là Bài tập lớn giữa kỳ (BTL_GK_OOP) môn Lập trình Hướng đối tượng dành cho sinh viên ngành Khoa học Máy tính và Kỹ thuật tại Đại học Việt Nhật (VJU). 
+> **Smart Home Hub** là đồ án Bài tập lớn Giữa kỳ môn Lập trình Hướng đối tượng (OOP). Vượt ra khỏi khuôn khổ một bài tập console truyền thống, hệ thống được nâng cấp thành một nền tảng IoT toàn diện: kết hợp lõi xử lý C++ vững chắc, giao diện Bản vẽ kỹ thuật 3D (Isometric Orthographic) thời gian thực và Trợ lý ảo AI có khả năng điều khiển thiết bị bằng giọng nói.
 
-Hệ thống mô phỏng một bộ điều khiển trung tâm cho ngôi nhà thông minh, cho phép người dùng quản lý các phòng, giám sát thiết bị IoT (Đèn, Điều hòa, Khóa thông minh) và tính toán điện năng tiêu thụ. Dự án được thiết kế với phần lõi xử lý mạnh mẽ (áp dụng khắt khe các nguyên lý OOP) kết hợp cùng giao diện người dùng trực quan trên nền tảng Web.
-
-🔗 **[Trải nghiệm trực tiếp giao diện Web tại đây](https://devk4z.github.io/BTL_GK_OOP/)**
+🔗 **[Trải nghiệm Live Demo tại đây](https://devk4z.github.io/BTL_GK_OOP/)**
 
 ---
 
-## ✨ Tính Năng Nổi Bật
+## 🌟 Tinh Hoa Công Nghệ & Tính Năng
 
-### 💻 Phần lõi (Core Engine)
-- **Quản lý không gian:** Khởi tạo mạng lưới các phòng (Phòng khách, Phòng ngủ, Gara...).
-- **Đa dạng thiết bị:** Hỗ trợ nhiều loại thiết bị đặc thù (SmartLight, SmartAC, SmartLock) với các thông số tùy chỉnh riêng biệt (độ sáng, nhiệt độ, mã PIN).
-- **Giám sát năng lượng:** Tự động tính toán tổng điện năng tiêu thụ dựa trên trạng thái (Bật/Tắt) và công suất cấu hình của từng thiết bị.
-- **Mô phỏng sự cố:** Giả lập tình trạng mất kết nối mạng của thiết bị IoT và xử lý ngoại lệ an toàn.
-- **Backup & Restore:** Lưu trữ toàn bộ trạng thái ngôi nhà ra file và khôi phục (Hydration) khi khởi động lại hệ thống.
+Dự án được thiết kế theo kiến trúc phân tầng, kết hợp giữa mô phỏng phần cứng và giao diện web hiện đại:
 
-### 🌐 Phần giao diện (Web Dashboard)
-- Hiển thị tổng quan số lượng thiết bị hoạt động và tổng điện năng tiêu thụ (W).
-- Giao diện thao tác hiện đại, phản hồi trạng thái thiết bị theo thời gian thực.
-- Tích hợp hệ thống Nhật ký (Logs) để theo dõi các hoạt động bật/tắt thiết bị.
+### 1. 🧊 Bản Sao Kỹ Thuật Số 3D (Digital Twin Blueprint)
+- **Góc nhìn Isometric Orthographic:** Tái hiện không gian nhà thông minh dưới dạng bản vẽ kỹ thuật chuẩn xác, loại bỏ các chi tiết thừa để tập trung vào luồng công năng.
+- **Tương tác Thời gian thực (Raycasting):** Click trực tiếp vào các khối 3D (Đèn, Điều hòa, Khóa) để thao tác bật/tắt. 
+- **Nhãn Đo Lường Động (HTML Overlay):** Hiển thị các thông số kỹ thuật sắc nét ngay trên không gian 3D (VD: `[Mức chiếu sáng: 80%]`, `[Nhiệt độ: 24°C]`, `[Trạng thái: ONLINE]`).
 
----
+### 2. 🤖 Trợ Lý Ảo AI & Voice Control (Gemini API)
+- **Giao tiếp bằng Giọng nói:** Tích hợp Web Speech API cho phép người dùng ra lệnh bằng giọng nói (Voice-to-Text).
+- **Function Calling:** AI không chỉ chat mà còn có quyền "gọi hàm" để trực tiếp can thiệp vào state của thiết bị (VD: "Giảm nhiệt độ phòng ngủ xuống 22 độ" -> AI tự động kích hoạt hàm cập nhật UI 3D).
+- **Macro Routine (Command Pattern):** Hỗ trợ thực thi chuỗi hành động tự động (Ví dụ: Chế độ đi ngủ = Tắt toàn bộ đèn + Khóa cửa chính).
 
-## 🧠 Các Nguyên Lý OOP Đã Áp Dụng
-
-Dự án là minh chứng cho việc ánh xạ tư duy Lập trình Hướng đối tượng vào thực tiễn kỹ thuật phần mềm:
-
-1. **Tính Trừu tượng (Abstraction):** Xây dựng abstract base class `Device` với các phương thức thuần ảo (`virtual operate() = 0`, `get_power_consumption()`), tạo ra một giao diện chung để hệ thống điều khiển mọi thiết bị mà không cần biết chi tiết triển khai bên trong.
-2. **Tính Kế thừa (Inheritance):** Các lớp `SmartLight`, `SmartAC`, `SmartLock` đều kế thừa từ lớp cơ sở `Device`, giúp tái sử dụng mã nguồn cho các thuộc tính chung (ID, Name, Base Power) và mở rộng thêm các thuộc tính riêng biệt.
-3. **Tính Đa hình (Polymorphism):** Hệ thống có thể gọi hàm `operate()` trên một con trỏ kiểu `Device*`, và chương trình sẽ tự động định tuyến (dynamic dispatch) đến đúng phương thức của lớp con tương ứng lúc runtime.
-4. **Tính Đóng gói (Encapsulation):** Bảo vệ các thuộc tính nhạy cảm như trạng thái (`status`), mức nhiệt (`temperature`), mã PIN (`passcode`) bằng các access modifiers (`private`/`protected`) và chỉ cho phép thao tác qua các getter/setter an toàn.
-5. **Nạp chồng toán tử (Operator Overloading):** Sử dụng `friend double operator+` để cho phép cộng trực tiếp điện năng của hai thiết bị một cách tự nhiên và ngắn gọn trong code.
-6. **Xử lý Ngoại lệ (Exception Handling):** Xây dựng custom exception `ConnectionException` để bắt và xử lý an toàn các trường hợp thao tác lên thiết bị đang bị giả lập mất kết nối mạng.
+### 3. ⚙️ Lõi Lập Trình Hướng Đối Tượng (C++ Core)
+- Áp dụng triệt để 4 trụ cột OOP (Trừu tượng, Đóng gói, Kế thừa, Đa hình) cho hệ thống thiết bị (`Device`, `SmartLight`, `SmartAC`, `SmartLock`).
+- Quản lý không gian qua cấu trúc `Hub -> Room -> Devices`.
+- Nạp chồng toán tử (`operator+`) để tính tổng điện năng tiêu thụ nhanh chóng.
 
 ---
 
 ## 🛠 Công Nghệ Sử Dụng
 
-- **Core Logic:** C++ (Sử dụng `std::shared_ptr` để quản lý bộ nhớ an toàn) / Python.
-- **Frontend UI:** Next.js (App Router), React, TypeScript.
-- **Styling:** Tailwind CSS, Lucide Icons.
-- **Deployment:** GitHub Pages.
+- **Frontend & Giao diện:** Next.js (App Router), React, Tailwind CSS.
+- **Đồ họa WebGL:** `@react-three/fiber`, `@react-three/drei`, `three.js`.
+- **Tích hợp AI:** Vercel AI SDK, Google Gemini API.
+- **Backend & OOP Core:** Ngôn ngữ C++, Python (dùng cho phiên bản console gốc).
+- **Deployment:** GitHub Pages / Vercel.
 
 ---
 
-## 🚀 Hướng Dẫn Cài Đặt Và Chạy Thử nghiệm
+## 🚀 Hướng Dẫn Cài Đặt (Local Development)
 
-### 1. Chạy Core Engine (C++ Version)
-Yêu cầu: Trình biên dịch C++ (GCC/Clang) hỗ trợ chuẩn C++11 trở lên.
+### 1. Khởi chạy Giao diện Web 3D (Next.js)
+Yêu cầu: Node.js (v18 trở lên).
+
 ```bash
 # Clone repository
-git clone [https://github.com/DevK4z/BTL_GK_OOP.git](https://github.com/DevK4z/BTL_GK_OOP.git)
+git clone https://github.com/DevK4z/BTL_GK_OOP.git
 cd BTL_GK_OOP
 
-# Biên dịch mã nguồn
-g++ main.cpp -o smarthome
-
-# Chạy ứng dụng console
-./smarthome
-
-```
-
-### 2. Chạy Core Engine (Python Version)
-
-Yêu cầu: Đã cài đặt Python 3.x.
-
-```bash
-# Khởi chạy script
-python main.py
-
-```
-
-### 3. Khởi chạy Giao diện Frontend (Next.js)
-
-Yêu cầu: Node.js (v18+) và npm/yarn/pnpm.
-
-```bash
-# Cài đặt các gói phụ thuộc
+# Cài đặt thư viện phụ thuộc
 npm install
 
-# Chạy server ở chế độ phát triển (Development)
-npm run dev
+# Tạo file .env.local và thêm GEMINI_API_KEY (để test Chatbot)
+echo "GEMINI_API_KEY=your_api_key_here" > .env.local
 
+# Khởi chạy server development
+npm run dev
+Truy cập: http://localhost:3000
+```
+2. Khởi chạy Core Engine (Phiên bản C++ Console)
+Yêu cầu: Trình biên dịch C++ (GCC/Clang).
+
+```bash
+# Di chuyển vào thư mục chứa mã nguồn C++ (nếu có)
+g++ main.cpp -o smarthome_engine
+./smarthome_engine
 ```
 
-Mở trình duyệt và truy cập: `http://localhost:3000`
+📐 Kiến Trúc Phần Mềm (Design Patterns)
+Polymorphism (Đa hình): Giao diện web và lõi C++ đều xử lý các thiết bị thông qua interface chung. Một mảng duy nhất chứa nhiều loại thiết bị khác nhau nhưng tự động chạy đúng logic khi gọi hàm operate().
 
----
+Command Pattern: Gói gọn các yêu cầu điều khiển (Bật/Tắt, Đổi thông số) thành các đối tượng độc lập, cho phép AI Chatbot dễ dàng thực thi hàng loạt (Routine automation).
 
-## 👤 Tác Giả
+Nhóm: tourist - Dự án nhóm OOP
 
-**Trần Hoàng Khánh (DevK4z)** - Sinh viên ngành Khoa học Máy tính và Kỹ thuật.
+Sinh viên ngành Khoa học Máy tính và Kỹ thuật - Đại học Việt Nhật (VJU).
 
-* Đại học Việt Nhật (VJU).
-* GitHub: [@DevK4z](https://www.google.com/search?q=https://github.com/DevK4z)
-
-*Báo cáo được thực hiện nhằm mục đích hoàn thành Bài tập lớn Giữa kỳ. Cảm ơn giảng viên và các bạn đã dành thời gian đánh giá dự án này!*
+GitHub: @DevK4z
